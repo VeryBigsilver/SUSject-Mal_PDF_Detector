@@ -63,13 +63,24 @@
                 <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
                     <div class="mb-4">
                         <label for="file" class="form-label fw-bold">Select PDF File</label>
-                        <input type="file" 
-                               class="form-control form-control-lg" 
-                               id="file" 
-                               name="file" 
-                               accept=".pdf"
-                               required>
-                        <div class="form-text">
+                        
+                        <!-- Drag and Drop Area -->
+                        <div class="drop-area" id="dropArea">
+                            <div class="drop-content">
+                                <i data-feather="upload-cloud" class="drop-icon"></i>
+                                <p class="drop-text">Drop your PDF file here or <span class="text-primary">click to browse</span></p>
+                                <p class="drop-subtext">Only PDF files • Max 16MB</p>
+                            </div>
+                            <input type="file" 
+                                   class="form-control" 
+                                   id="file" 
+                                   name="file" 
+                                   accept=".pdf"
+                                   required
+                                   style="display: none;">
+                        </div>
+                        
+                        <div class="form-text mt-2">
                             <i data-feather="info" class="me-1"></i>
                             Only PDF files are allowed. Maximum size: 16MB
                         </div>
@@ -89,7 +100,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <h5 class="mb-1">
-                                <i data-feather="file-check" class="me-2 text-success"></i>
+                                <i data-feather="check-circle" class="me-2 text-success"></i>
                                 {{ uploaded_file }}
                             </h5>
                             <small class="text-muted">File uploaded successfully</small>

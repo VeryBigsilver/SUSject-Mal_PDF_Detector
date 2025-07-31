@@ -213,6 +213,116 @@ body {
     font-size: 0.875rem;
 }
 
+/* Drag and Drop Area */
+.drop-area {
+    border: 3px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.drop-area:hover {
+    border-color: var(--primary-color);
+    background: #e3f2fd;
+    transform: translateY(-2px);
+}
+
+.drop-area.dragover {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    box-shadow: 0 8px 25px rgba(13, 110, 253, 0.2);
+}
+
+.drop-content {
+    pointer-events: none;
+}
+
+.drop-icon {
+    width: 48px;
+    height: 48px;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.drop-area:hover .drop-icon,
+.drop-area.dragover .drop-icon {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.drop-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.drop-subtext {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.drop-area.has-file {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+}
+
+.drop-area.has-file .drop-icon {
+    color: var(--success-color);
+}
+
+.drop-area.error {
+    border-color: var(--danger-color);
+    background: linear-gradient(135deg, #fff5f5 0%, #fed7e2 100%);
+    animation: shake-error 0.5s ease-in-out;
+}
+
+@keyframes shake-error {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* File preview in drop area */
+.file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.file-preview-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--success-color);
+    margin-right: 0.5rem;
+}
+
+.file-preview-info {
+    text-align: left;
+}
+
+.file-preview-name {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.file-preview-size {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
 /* Footer */
 footer {
     margin-top: auto;

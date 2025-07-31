@@ -10,14 +10,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeFileUpload() {
     const fileInput = document.getElementById('file');
     const uploadForm = document.getElementById('uploadForm');
+    const dropArea = document.getElementById('dropArea');
     
     if (fileInput) {
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                validateFile(file);
+                if (validateFile(file)) {
+                    updateDropAreaWithFile(file);
+                }
             }
         });
+    }
+    
+    // Initialize drag and drop
+    if (dropArea) {
+        initializeDragAndDrop(dropArea, fileInput);
     }
     
     if (uploadForm) {
@@ -30,27 +38,143 @@ function initializeFileUpload() {
     }
 }
 
+function initializeDragAndDrop(dropArea, fileInput) {
+    // Click to open file dialog
+    dropArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    // Handle dropped files
+    dropArea.addEventListener('drop', handleDrop, false);
+}
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+function highlight(e) {
+    const dropArea = document.getElementById('dropArea');
+    dropArea.classList.add('dragover');
+}
+
+function unhighlight(e) {
+    const dropArea = document.getElementById('dropArea');
+    dropArea.classList.remove('dragover');
+}
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    const fileInput = document.getElementById('file');
+    
+    if (files.length > 0) {
+        const file = files[0];
+        
+        // Set the file to the input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        
+        // Validate and update UI
+        if (validateFile(file)) {
+            updateDropAreaWithFile(file);
+        } else {
+            showDropAreaError();
+        }
+    }
+}
+
+function updateDropAreaWithFile(file) {
+    const dropArea = document.getElementById('dropArea');
+    dropArea.classList.add('has-file');
+    dropArea.classList.remove('error');
+    
+    const fileSize = formatFileSize(file.size);
+    dropArea.innerHTML = `
+        <div class="drop-content">
+            <i data-feather="check-circle" class="drop-icon text-success"></i>
+            <p class="drop-text text-success">File Ready for Upload</p>
+            <div class="file-preview">
+                <i data-feather="file-text" class="file-preview-icon"></i>
+                <div class="file-preview-info">
+                    <div class="file-preview-name">${file.name}</div>
+                    <div class="file-preview-size">${fileSize}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Re-initialize feather icons
+    feather.replace();
+}
+
+function showDropAreaError() {
+    const dropArea = document.getElementById('dropArea');
+    dropArea.classList.add('error');
+    dropArea.classList.remove('has-file');
+    
+    // Reset to original state after animation
+    setTimeout(() => {
+        dropArea.classList.remove('error');
+    }, 1000);
+}
+
 function validateFile(file) {
     const maxSize = 16 * 1024 * 1024; // 16MB
     const allowedTypes = ['application/pdf'];
+    const allowedExtensions = ['.pdf'];
     
-    // Check file type
-    if (!allowedTypes.includes(file.type)) {
-        showAlert('Only PDF files are allowed', 'danger');
-        document.getElementById('file').value = '';
+    // Check file type and extension
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+        showAlert('PDF 파일만 업로드할 수 있습니다', 'danger');
+        resetFileInput();
         return false;
     }
     
     // Check file size
     if (file.size > maxSize) {
-        showAlert('File is too large. Maximum size is 16MB.', 'danger');
-        document.getElementById('file').value = '';
+        showAlert('파일이 너무 큽니다. 최대 크기는 16MB입니다.', 'danger');
+        resetFileInput();
         return false;
     }
     
-    // Show file info
-    showFileInfo(file);
     return true;
+}
+
+function resetFileInput() {
+    const fileInput = document.getElementById('file');
+    const dropArea = document.getElementById('dropArea');
+    
+    fileInput.value = '';
+    
+    if (dropArea) {
+        dropArea.classList.remove('has-file', 'error');
+        dropArea.innerHTML = `
+            <div class="drop-content">
+                <i data-feather="upload-cloud" class="drop-icon"></i>
+                <p class="drop-text">Drop your PDF file here or <span class="text-primary">click to browse</span></p>
+                <p class="drop-subtext">Only PDF files • Max 16MB</p>
+            </div>
+        `;
+        feather.replace();
+    }
 }
 
 function showFileInfo(file) {
