@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeFileUpload() {
     const fileInput = document.getElementById('file');
-    const uploadForm = document.getElementById('uploadForm');
     const dropArea = document.getElementById('dropArea');
+    const analyzeForm = document.getElementById('analyzeForm');
     
     if (fileInput) {
         fileInput.addEventListener('change', function(e) {
@@ -18,6 +18,7 @@ function initializeFileUpload() {
             if (file) {
                 if (validateFile(file)) {
                     updateDropAreaWithFile(file);
+                    showAnalysisSection(file);
                 }
             }
         });
@@ -28,11 +29,15 @@ function initializeFileUpload() {
         initializeDragAndDrop(dropArea, fileInput);
     }
     
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                showUploadProgress(submitBtn);
+    // Handle analyze form submission
+    if (analyzeForm) {
+        analyzeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                submitAnalysis(file);
             }
         });
     }
@@ -109,7 +114,7 @@ function updateDropAreaWithFile(file) {
     dropArea.innerHTML = `
         <div class="drop-content">
             <i data-feather="check-circle" class="drop-icon text-success"></i>
-            <p class="drop-text text-success">File Ready for Upload</p>
+            <p class="drop-text text-success">파일이 선택되었습니다</p>
             <div class="file-preview">
                 <i data-feather="file-text" class="file-preview-icon"></i>
                 <div class="file-preview-info">
@@ -122,6 +127,71 @@ function updateDropAreaWithFile(file) {
     
     // Re-initialize feather icons
     feather.replace();
+}
+
+function showAnalysisSection(file) {
+    const analysisSection = document.getElementById('analysisSection');
+    analysisSection.style.display = 'block';
+    
+    // Scroll to analysis section
+    analysisSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function submitAnalysis(file) {
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const originalText = analyzeBtn.innerHTML;
+    
+    // Show loading state
+    analyzeBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        분석 중...
+    `;
+    analyzeBtn.disabled = true;
+    
+    // Show progress modal
+    showProgressModal();
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Submit analysis
+    fetch('/analyze', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.text();
+        } else {
+            return response.json().then(data => {
+                throw new Error(data.error || '분석 중 오류가 발생했습니다');
+            });
+        }
+    })
+    .then(html => {
+        // Replace entire page content with result
+        document.open();
+        document.write(html);
+        document.close();
+    })
+    .catch(error => {
+        // Hide progress modal
+        const modal = document.getElementById('progressModal');
+        if (modal) {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+        
+        // Reset button
+        analyzeBtn.innerHTML = originalText;
+        analyzeBtn.disabled = false;
+        
+        // Show error
+        showAlert(error.message, 'danger');
+    });
 }
 
 function showDropAreaError() {

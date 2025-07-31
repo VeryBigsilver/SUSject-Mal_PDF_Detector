@@ -52,65 +52,40 @@ def index():
     """Main page for file upload"""
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    """Handle file upload"""
-    try:
-        if 'file' not in request.files:
-            flash('No file selected', 'error')
-            return redirect(url_for('index'))
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            flash('No file selected', 'error')
-            return redirect(url_for('index'))
-        
-        if not allowed_file(file.filename):
-            flash('Only PDF files are allowed', 'error')
-            return redirect(url_for('index'))
-        
-        if file:
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            
-            flash('File uploaded successfully!', 'success')
-            return render_template('index.html', 
-                                 uploaded_file=filename, 
-                                 file_path=filepath,
-                                 show_analyze=True)
-    
-    except RequestEntityTooLarge:
-        flash('File is too large. Maximum size is 16MB.', 'error')
-        return redirect(url_for('index'))
-    except Exception as e:
-        app.logger.error(f"Upload error: {str(e)}")
-        flash('An error occurred during file upload', 'error')
-        return redirect(url_for('index'))
-
 @app.route('/analyze', methods=['POST'])
 def analyze_file():
     """Analyze the uploaded PDF file"""
     try:
-        filepath = request.form.get('filepath')
-        filename = request.form.get('filename')
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file selected'}), 400
         
-        if not filepath or not os.path.exists(filepath):
-            flash('File not found', 'error')
-            return redirect(url_for('index'))
+        file = request.files['file']
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Only PDF files are allowed'}), 400
         
         if model is None:
-            flash('AI model not loaded. Please check server configuration.', 'error')
-            return redirect(url_for('index'))
+            return jsonify({'error': 'AI model not loaded. Please check server configuration.'}), 500
+        
+        # Save file temporarily
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
         
         # Preprocess the PDF
         app.logger.info(f"Starting analysis of {filename}")
         features = preprocess_pdf(filepath)
         
         if features is None:
-            flash('Error processing PDF file', 'error')
-            return redirect(url_for('index'))
+            # Clean up file
+            try:
+                os.remove(filepath)
+            except Exception:
+                pass
+            return jsonify({'error': 'Error processing PDF file'}), 400
         
         # Run inference
         prediction = model.predict([features])[0]
@@ -138,10 +113,11 @@ def analyze_file():
         app.logger.info(f"Analysis complete: {result_data}")
         return render_template('index.html', result=result_data)
         
+    except RequestEntityTooLarge:
+        return jsonify({'error': 'File is too large. Maximum size is 16MB.'}), 400
     except Exception as e:
         app.logger.error(f"Analysis error: {str(e)}")
-        flash('An error occurred during analysis', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'error': 'An error occurred during analysis'}), 500
 
 @app.errorhandler(413)
 def too_large(e):

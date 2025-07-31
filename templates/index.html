@@ -60,65 +60,36 @@
                     <p class="text-muted">Upload a PDF file to analyze it for potential malware threats</p>
                 </div>
 
-                <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="uploadForm">
-                    <div class="mb-4">
-                        <label for="file" class="form-label fw-bold">Select PDF File</label>
-                        
-                        <!-- Drag and Drop Area -->
-                        <div class="drop-area" id="dropArea">
-                            <div class="drop-content">
-                                <i data-feather="upload-cloud" class="drop-icon"></i>
-                                <p class="drop-text">Drop your PDF file here or <span class="text-primary">click to browse</span></p>
-                                <p class="drop-subtext">Only PDF files • Max 16MB</p>
-                            </div>
-                            <input type="file" 
-                                   class="form-control" 
-                                   id="file" 
-                                   name="file" 
-                                   accept=".pdf"
-                                   required
-                                   style="display: none;">
-                        </div>
-                        
-                        <div class="form-text mt-2">
-                            <i data-feather="info" class="me-1"></i>
-                            Only PDF files are allowed. Maximum size: 16MB
-                        </div>
+                <!-- Drag and Drop Area -->
+                <div class="drop-area" id="dropArea">
+                    <div class="drop-content">
+                        <i data-feather="upload-cloud" class="drop-icon"></i>
+                        <p class="drop-text">Drop your PDF file here or <span class="text-primary">click to browse</span></p>
+                        <p class="drop-subtext">Only PDF files • Max 16MB</p>
                     </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i data-feather="upload" class="me-2"></i>
-                            Upload PDF
-                        </button>
-                    </div>
-                </form>
+                    <input type="file" 
+                           class="form-control" 
+                           id="file" 
+                           name="file" 
+                           accept=".pdf"
+                           style="display: none;">
+                </div>
+                
+                <div class="form-text mt-2">
+                    <i data-feather="info" class="me-1"></i>
+                    Only PDF files are allowed. Maximum size: 16MB
+                </div>
 
-                {% if uploaded_file and show_analyze %}
-                <!-- File Upload Success -->
-                <div class="mt-4 p-4 bg-light rounded">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <h5 class="mb-1">
-                                <i data-feather="check-circle" class="me-2 text-success"></i>
-                                {{ uploaded_file }}
-                            </h5>
-                            <small class="text-muted">File uploaded successfully</small>
-                        </div>
-                    </div>
-                    
-                    <form action="{{ url_for('analyze_file') }}" method="post" class="mt-3">
-                        <input type="hidden" name="filepath" value="{{ file_path }}">
-                        <input type="hidden" name="filename" value="{{ uploaded_file }}">
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg" id="analyzeBtn">
-                                <i data-feather="search" class="me-2"></i>
-                                Analyze for Malware
-                            </button>
-                        </div>
+                <!-- Analysis Section (Hidden by default) -->
+                <div id="analysisSection" class="mt-4" style="display: none;">
+                    <form id="analyzeForm" method="post" class="d-grid">
+                        <input type="hidden" id="selectedFile" name="file">
+                        <button type="submit" class="btn btn-success btn-lg" id="analyzeBtn">
+                            <i data-feather="search" class="me-2"></i>
+                            Analyze for Malware
+                        </button>
                     </form>
                 </div>
-                {% endif %}
             </div>
         </div>
         {% endif %}
