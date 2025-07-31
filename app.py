@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 import tempfile
 import shutil
-from pdf_preprocessor import preprocess_pdf
+from feature_extracting import preprocess_pdf
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -32,7 +32,11 @@ def load_model():
     """Load the pre-trained AI model from pickle file"""
     global model
     try:
-        model_path = os.environ.get('MODEL_PATH', 'model.pkl')
+        # MODEL_PATH는 모델 폴더 경로를 가리킴
+        model_folder = os.environ.get('MODEL_PATH', 'model')
+        model_filename = 'model_randomforest.pkl'
+        model_path = os.path.join(model_folder, model_filename)
+        
         if os.path.exists(model_path):
             with open(model_path, 'rb') as f:
                 model = pickle.load(f)

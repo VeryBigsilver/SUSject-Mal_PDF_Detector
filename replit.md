@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Main Application**: Flask web server (`app.py`)
 - **Entry Point**: Simple WSGI entry point (`main.py`)
-- **PDF Processing**: Custom preprocessing module (`pdf_preprocessor.py`)
+- **PDF Processing**: Custom preprocessing module (`feature_extracting.py`)
 - **ML Model**: Pickle-serialized machine learning model loaded at runtime
 - **File Handling**: Secure file upload with validation and temporary storage
 
@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
 - Model loading and prediction integration
 - Flash messaging for user feedback
 
-### 2. PDF Preprocessor (`pdf_preprocessor.py`)
+### 2. PDF Preprocessor (`feature_extracting.py`)
 - PDF parsing using PyPDF2 or pdfplumber as fallback
 - Feature extraction for ML model:
   - File size analysis
