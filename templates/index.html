@@ -1,139 +1,297 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>악성 PDF 분석기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #fafafa;
+            transition: border-color 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        #fileInput {
+            display: none;
+        }
+        .upload-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .upload-btn:hover {
+            background-color: #0056b3;
+        }
+        .upload-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.malicious {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .result.suspicious {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .result.safe {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .features {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .analysis-details {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .feature-counts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .feature-item {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: center;
+        }
+        .feature-item.high-risk {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .feature-item.medium-risk {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .feature-item.low-risk {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .confidence-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .confidence-high {
+            background-color: #dc3545;
+            color: white;
+        }
+        .confidence-medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .confidence-low {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 악성 PDF 분석기</h1>
         
-        {% if result %}
-        <!-- Analysis Results -->
-        <div class="card border-0 shadow-lg mb-4 result-card {{ 'malicious' if result.is_malicious else 'clean' }}">
-            <div class="card-body text-center p-5">
-                <div class="result-icon mb-4">
-                    {% if result.is_malicious %}
-                        <i data-feather="alert-triangle" class="malicious-icon"></i>
-                    {% else %}
-                        <i data-feather="shield-check" class="clean-icon"></i>
-                    {% endif %}
-                </div>
-                
-                <h2 class="result-title mb-3">{{ result.message }}</h2>
-                
-                <div class="file-info mb-4">
-                    <h5 class="mb-2">
-                        <i data-feather="file" class="me-2"></i>
-                        {{ result.filename }}
-                    </h5>
-                    <div class="confidence-score">
-                        <span class="badge fs-6 px-3 py-2 {{ 'bg-danger' if result.is_malicious else 'bg-success' }}">
-                            Confidence: {{ result.confidence }}%
-                        </span>
-                    </div>
-                </div>
-                
-                {% if result.is_malicious %}
-                <div class="alert alert-danger border-0" role="alert">
-                    <i data-feather="alert-circle" class="me-2"></i>
-                    <strong>Warning:</strong> This file has been identified as potentially malicious. 
-                    Do not open or execute this file on your system.
-                </div>
-                {% else %}
-                <div class="alert alert-success border-0" role="alert">
-                    <i data-feather="check-circle" class="me-2"></i>
-                    <strong>Safe:</strong> No malicious content detected in this PDF file.
-                </div>
-                {% endif %}
-                
-                <button type="button" class="btn btn-outline-secondary btn-lg mt-3" onclick="window.location.reload()">
-                    <i data-feather="upload" class="me-2"></i>
-                    Analyze Another File
-                </button>
-            </div>
+        <div class="upload-area" id="uploadArea">
+            <p>PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
+            <input type="file" id="fileInput" accept=".pdf">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                파일 선택
+            </button>
         </div>
         
-        {% else %}
-        <!-- File Upload Section -->
-        <div class="card border-0 shadow">
-            <div class="card-body p-5">
-                <div class="text-center mb-4">
-                    <i data-feather="upload-cloud" class="upload-icon mb-3"></i>
-                    <h1 class="h3 mb-3">PDF Malware Analysis</h1>
-                    <p class="text-muted">Upload a PDF file to analyze it for potential malware threats</p>
-                </div>
-
-                <!-- Drag and Drop Area -->
-                <div class="drop-area" id="dropArea">
-                    <div class="drop-content">
-                        <i data-feather="upload-cloud" class="drop-icon"></i>
-                        <p class="drop-text">Drop your PDF file here or <span class="text-primary">click to browse</span></p>
-                        <p class="drop-subtext">Only PDF files • Max 16MB</p>
-                    </div>
-                    <input type="file" 
-                           class="form-control" 
-                           id="file" 
-                           name="file" 
-                           accept=".pdf"
-                           style="display: none;">
-                </div>
-                
-                <div class="form-text mt-2">
-                    <i data-feather="info" class="me-1"></i>
-                    Only PDF files are allowed. Maximum size: 16MB
-                </div>
-
-                <!-- Analysis Section (Hidden by default) -->
-                <div id="analysisSection" class="mt-4" style="display: none;">
-                    <form id="analyzeForm" method="post" class="d-grid">
-                        <input type="hidden" id="selectedFile" name="file">
-                        <button type="submit" class="btn btn-success btn-lg" id="analyzeBtn">
-                            <i data-feather="search" class="me-2"></i>
-                            Analyze for Malware
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Features Section -->
-        {% if not result %}
-        <div class="row mt-5">
-            <div class="col-md-4">
-                <div class="text-center p-4">
-                    <i data-feather="shield" class="feature-icon text-primary mb-3"></i>
-                    <h5>AI-Powered Detection</h5>
-                    <p class="text-muted">Advanced machine learning algorithms analyze PDF structure and content</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="text-center p-4">
-                    <i data-feather="zap" class="feature-icon text-warning mb-3"></i>
-                    <h5>Fast Analysis</h5>
-                    <p class="text-muted">Get results in seconds with our optimized processing pipeline</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="text-center p-4">
-                    <i data-feather="lock" class="feature-icon text-success mb-3"></i>
-                    <h5>Secure Processing</h5>
-                    <p class="text-muted">Files are processed securely and automatically deleted after analysis</p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
+        <div class="result" id="result"></div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    if (analyzeBtn) {
-        analyzeBtn.addEventListener('click', function() {
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
-            this.disabled = true;
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+
+        // 드래그 앤 드롭 이벤트
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
-    }
-});
-</script>
-{% endblock %}
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // 파일 선택 이벤트
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showResult('PDF 파일만 업로드 가능합니다.', 'error');
+                return;
+            }
+
+            // 로딩 표시
+            showResult('파일을 분석하고 있습니다...', 'loading');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAnalysisResult(data);
+                } else {
+                    showResult(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showResult('업로드 중 오류가 발생했습니다: ' + error.message, 'error');
+            });
+        }
+
+        function showAnalysisResult(data) {
+            let resultClass = 'success';
+            let confidenceClass = 'confidence-low';
+            
+            // 결과에 따른 스타일 결정
+            if (data.prediction.includes('악성')) {
+                resultClass = 'malicious';
+                confidenceClass = 'confidence-high';
+            } else if (data.prediction.includes('의심스러운')) {
+                resultClass = 'suspicious';
+                confidenceClass = 'confidence-medium';
+            } else {
+                resultClass = 'safe';
+                confidenceClass = 'confidence-low';
+            }
+
+            // 특징 카운트 HTML 생성
+            let featureCountsHTML = '';
+            if (data.feature_counts) {
+                featureCountsHTML = '<div class="feature-counts">';
+                for (const [feature, count] of Object.entries(data.feature_counts)) {
+                    if (count > 0 && feature !== 'is_pdf' && feature !== 'error' && feature !== 'size') {
+                        let riskClass = 'low-risk';
+                        if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia'].includes(feature)) {
+                            riskClass = 'high-risk';
+                        } else if (['/Encrypt', '/ObjStm', '/XFA'].includes(feature)) {
+                            riskClass = 'medium-risk';
+                        }
+                        featureCountsHTML += `<div class="feature-item ${riskClass}">${feature}: ${count}</div>`;
+                    }
+                }
+                featureCountsHTML += '</div>';
+            }
+
+            const resultHTML = `
+                <div class="analysis-details">
+                    <h3>📊 분석 결과</h3>
+                    <p><strong>파일명:</strong> ${data.filename}</p>
+                    <p><strong>분석 방법:</strong> ${data.analysis_method}</p>
+                    <p><strong>결과:</strong> ${data.prediction} <span class="confidence-badge ${confidenceClass}">신뢰도: ${data.confidence}</span></p>
+                    
+                    <h4>🔍 추출된 특징</h4>
+                    ${featureCountsHTML}
+                    
+                    <h4>📋 상세 분석 정보</h4>
+                    <div class="features">
+                        ${data.features}
+                    </div>
+                </div>
+            `;
+
+            showResult(resultHTML, resultClass);
+        }
+
+        function showResult(message, type) {
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html> 
