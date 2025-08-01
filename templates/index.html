@@ -156,6 +156,190 @@
             background-color: #28a745;
             color: white;
         }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        /* 진행률 바 스타일 */
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .result.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.malicious {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.suspicious {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .result.safe {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+
+        .features {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .analysis-details {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+
+        .feature-counts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .feature-item {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .feature-item.high-risk {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .feature-item.medium-risk {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .feature-item.low-risk {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .confidence-high {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .confidence-medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .confidence-low {
+            background-color: #28a745;
+            color: white;
+        }
+
+
     </style>
 </head>
 <body>
@@ -173,10 +357,26 @@
         <div class="result" id="result"></div>
     </div>
 
+    <!-- 진행률 모달 -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content">
+            <div class="progress-container">
+                <h3>🔍 PDF 파일 분석 중...</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">분석을 시작합니다...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const result = document.getElementById('result');
+        const progressModal = document.getElementById('progressModal');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
 
         // 드래그 앤 드롭 이벤트
         uploadArea.addEventListener('dragover', (e) => {
@@ -210,8 +410,9 @@
                 return;
             }
 
-            // 로딩 표시
-            showResult('파일을 분석하고 있습니다...', 'loading');
+            // 진행률 모달 표시
+            showProgressModal();
+            simulateProgress();
 
             const formData = new FormData();
             formData.append('file', file);
@@ -222,75 +423,66 @@
             })
             .then(response => response.json())
             .then(data => {
+                hideProgressModal();
                 if (data.success) {
-                    showAnalysisResult(data);
+                    // 결과를 세션 스토리지에 저장하고 새 페이지로 리다이렉트
+                    console.log('분석 결과 데이터:', data);
+                    sessionStorage.setItem('pdfAnalysisResult', JSON.stringify(data));
+                    console.log('세션 스토리지에 데이터 저장 완료');
+                    window.location.href = '/result';
                 } else {
                     showResult(data.error, 'error');
                 }
             })
             .catch(error => {
+                hideProgressModal();
                 showResult('업로드 중 오류가 발생했습니다: ' + error.message, 'error');
             });
         }
 
-        function showAnalysisResult(data) {
-            let resultClass = 'success';
-            let confidenceClass = 'confidence-low';
-            
-            // 결과에 따른 스타일 결정
-            if (data.prediction.includes('악성')) {
-                resultClass = 'malicious';
-                confidenceClass = 'confidence-high';
-            } else if (data.prediction.includes('의심스러운')) {
-                resultClass = 'suspicious';
-                confidenceClass = 'confidence-medium';
-            } else {
-                resultClass = 'safe';
-                confidenceClass = 'confidence-low';
-            }
+        function showProgressModal() {
+            progressModal.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '분석을 시작합니다...';
+        }
 
-            // 특징 카운트 HTML 생성
-            let featureCountsHTML = '';
-            if (data.feature_counts) {
-                featureCountsHTML = '<div class="feature-counts">';
-                for (const [feature, count] of Object.entries(data.feature_counts)) {
-                    if (count > 0 && feature !== 'is_pdf' && feature !== 'error' && feature !== 'size') {
-                        let riskClass = 'low-risk';
-                        if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia'].includes(feature)) {
-                            riskClass = 'high-risk';
-                        } else if (['/Encrypt', '/ObjStm', '/XFA'].includes(feature)) {
-                            riskClass = 'medium-risk';
-                        }
-                        featureCountsHTML += `<div class="feature-item ${riskClass}">${feature}: ${count}</div>`;
-                    }
+        function hideProgressModal() {
+            progressModal.style.display = 'none';
+        }
+
+        function simulateProgress() {
+            const steps = [
+                { progress: 20, text: '파일 업로드 중...' },
+                { progress: 40, text: 'PDF 구조 분석 중...' },
+                { progress: 60, text: '특징 추출 중...' },
+                { progress: 80, text: '악성코드 패턴 검사 중...' },
+                { progress: 95, text: '결과 분석 중...' }
+            ];
+
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    const step = steps[currentStep];
+                    progressFill.style.width = step.progress + '%';
+                    progressText.textContent = step.text;
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
                 }
-                featureCountsHTML += '</div>';
-            }
-
-            const resultHTML = `
-                <div class="analysis-details">
-                    <h3>📊 분석 결과</h3>
-                    <p><strong>파일명:</strong> ${data.filename}</p>
-                    <p><strong>분석 방법:</strong> ${data.analysis_method}</p>
-                    <p><strong>결과:</strong> ${data.prediction} <span class="confidence-badge ${confidenceClass}">신뢰도: ${data.confidence}</span></p>
-                    
-                    <h4>🔍 추출된 특징</h4>
-                    ${featureCountsHTML}
-                    
-                    <h4>📋 상세 분석 정보</h4>
-                    <div class="features">
-                        ${data.features}
-                    </div>
-                </div>
-            `;
-
-            showResult(resultHTML, resultClass);
+            }, 800);
         }
 
         function showResult(message, type) {
             result.innerHTML = message;
             result.className = `result ${type}`;
             result.style.display = 'block';
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            if (event.target == progressModal) {
+                hideProgressModal();
+            }
         }
     </script>
 </body>
