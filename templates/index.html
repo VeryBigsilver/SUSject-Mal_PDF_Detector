@@ -339,7 +339,316 @@
             color: white;
         }
 
+        /* 프로젝트 설명 스타일 */
+        .project-info {
+            margin-top: 30px;
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
 
+        .project-info h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .project-description {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .feature-items {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 20px;
+        }
+
+        .feature-item {
+            flex: 1;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #007bff;
+            border-radius: 50%;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-icon svg {
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-3px) scale(1.02); }
+        }
+
+        /* AI 머신러닝 아이콘 애니메이션 */
+        .checkmark-path {
+            stroke-dasharray: 20;
+            stroke-dashoffset: 20;
+            animation: checkmarkDraw 2.5s ease-in-out infinite;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes checkmarkDraw {
+            0% { stroke-dashoffset: 20; }
+            40% { stroke-dashoffset: 0; }
+            80% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: 0; }
+        }
+
+        .pulse-circle {
+            animation: pulse 3s ease-in-out infinite;
+            stroke: currentColor;
+            stroke-width: 1;
+            fill: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.05); }
+        }
+
+        /* 검색 아이콘 애니메이션 */
+        .search-circle {
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .search-line {
+            animation: searchLine 2.5s ease-in-out infinite;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes searchLine {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        .search-dot {
+            animation: searchPulse 2s ease-in-out infinite;
+            fill: currentColor;
+        }
+
+        @keyframes searchPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.9; }
+        }
+
+        /* 십자 별 애니메이션 */
+        .search-star {
+            animation: starTwinkle 1.5s ease-in-out infinite;
+            fill: currentColor;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* 시계 애니메이션 */
+        .clock-container {
+            animation: clockFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes clockFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .clock-circle {
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .hour-hand {
+            animation: hourHand 12s linear infinite;
+            transform-origin: 12px 12px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes hourHand {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .minute-hand {
+            animation: minuteHand 2s linear infinite;
+            transform-origin: 12px 12px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes minuteHand {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .clock-center {
+            fill: currentColor;
+        }
+
+        /* 각 아이콘별 지연 시간 */
+        .feature-item:nth-child(1) .feature-icon svg {
+            animation-delay: 0s;
+        }
+
+        .feature-item:nth-child(2) .feature-icon svg {
+            animation-delay: 1s;
+        }
+
+        .feature-item:nth-child(3) .feature-icon svg {
+            animation-delay: 2s;
+        }
+
+        /* 호버 효과 개선 */
+        .feature-item:hover .feature-icon {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            transform: scale(1.05);
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover .feature-icon svg {
+            animation-play-state: paused;
+        }
+
+        .feature-item h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .feature-item p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .feature-items {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .feature-item {
+                aspect-ratio: auto;
+                min-height: 200px;
+            }
+            
+            .project-info {
+                padding: 20px;
+            }
+            
+            .project-info h2 {
+                font-size: 20px;
+            }
+            
+            .project-description {
+                font-size: 14px;
+            }
+        }
+
+        /* 실시간 탐지 아이콘 애니메이션 */
+        .realtime-container {
+            animation: realtimeFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes realtimeFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-2px) scale(1.02); }
+        }
+
+        .radar-circle {
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 62.8;
+            stroke-dashoffset: 62.8;
+            animation: radarScan 2s ease-in-out infinite;
+        }
+
+        @keyframes radarScan {
+            0% { stroke-dashoffset: 62.8; opacity: 0.8; }
+            50% { stroke-dashoffset: 0; opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0.8; }
+        }
+
+        .radar-line {
+            animation: radarLine 1.5s linear infinite;
+            transform-origin: 12px 12px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        @keyframes radarLine {
+            0% { transform: rotate(0deg); opacity: 1; }
+            100% { transform: rotate(360deg); opacity: 0.3; }
+        }
+
+        .radar-center {
+            animation: radarPulse 1s ease-in-out infinite;
+            fill: currentColor;
+        }
+
+        @keyframes radarPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .radar-dots {
+            animation: radarDots 2s ease-in-out infinite;
+        }
+
+        @keyframes radarDots {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -352,6 +661,74 @@
             <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                 파일 선택
             </button>
+        </div>
+        
+        <!-- 프로젝트 설명 섹션 -->
+        <div class="project-info">
+            <h2>🔍 PDF 악성코드 탐지 시스템</h2>
+            <p class="project-description">
+                AI 기반 머신러닝과 규칙 기반 분석을 통해 PDF 파일의 악성코드를 탐지하는 보안 도구입니다.
+            </p>
+            
+            <div class="feature-items">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <!-- 배경 원 -->
+                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3" class="pulse-circle"/>
+                            <!-- 체크마크 -->
+                            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="checkmark-path"/>
+                            <!-- 추가 장식 원 -->
+                            <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+                        </svg>
+                    </div>
+                    <h3>AI 머신러닝</h3>
+                    <p>Random Forest 알고리즘을 사용한 지능형 악성코드 탐지로 높은 정확도를 제공합니다.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <!-- 검색 원 -->
+                            <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2" class="search-circle"/>
+                            <!-- 검색선 -->
+                            <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="search-line"/>
+                            <!-- 중앙 점 -->
+                            <circle cx="11" cy="11" r="2" fill="currentColor" class="search-dot"/>
+                            <!-- 십자 별 -->
+                            <g class="search-star" transform="translate(18, 6)">
+                                <path d="M0,-2 L0,2 M-2,0 L2,0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <circle cx="0" cy="0" r="1" fill="currentColor"/>
+                            </g>
+                            <!-- 추가 장식 -->
+                            <circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <h3>특징 분석</h3>
+                    <p>PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 위험 요소를 종합적으로 분석합니다.</p>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="clock-container">
+                            <!-- 배경 원 -->
+                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                            <!-- 시계 테두리 -->
+                            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" class="clock-circle"/>
+                            <!-- 시침 -->
+                            <path d="M12 12L12 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="hour-hand"/>
+                            <!-- 분침 -->
+                            <path d="M12 12L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="minute-hand"/>
+                            <!-- 시계 중앙 -->
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor" class="clock-center"/>
+                            <!-- 추가 장식 원 -->
+                            <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+                        </svg>
+                    </div>
+                    <h3>실시간 검사</h3>
+                    <p>업로드 즉시 분석이 시작되어 몇 초 내에 상세한 보안 분석 결과를 제공합니다.</p>
+                </div>
+            </div>
         </div>
         
         <div class="result" id="result"></div>
