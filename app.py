@@ -90,10 +90,10 @@ def create_model_feature_vector(features_dict):
     
     # 모델 학습에 사용된 특징들 (추정)
     model_features = [
-        '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript', 
+        'size', '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript', 
         '/AA', '/OpenAction', '/AcroForm', '/JBIG2Decode', '/RichMedia', 
         '/Launch', '/EmbeddedFile', '/XFA', '/URI', '/Colors > 2^24',
-        'obj_diff', 'stream_diff', 'xref_diff', 'size'
+        'obj_diff', 'stream_diff', 'xref_diff'
     ]
     
     feature_vector = []
