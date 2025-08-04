@@ -113,49 +113,6 @@ def load_model():
         print(f"모델 로드 오류: {e}")
         return None
 
-def analyze_pdf_maliciousness(features_dict):
-    """PDF의 악성 여부를 분석하는 간단한 규칙 기반 분석"""
-    risk_score = 0
-    risk_factors = []
-    
-    # 위험도가 높은 특징들
-    high_risk_features = {
-        '/JS': 10, '/JavaScript': 10, '/Launch': 15, '/EmbeddedFile': 12,
-        '/OpenAction': 8, '/AA': 6, '/AcroForm': 5, '/RichMedia': 7
-    }
-    
-    # 중간 위험도 특징들
-    medium_risk_features = {
-        '/Encrypt': 3, '/ObjStm': 4, '/XFA': 4
-    }
-    
-    # 각 특징에 대한 위험도 계산
-    for feature, count in features_dict.items():
-        if feature in high_risk_features and count > 0:
-            risk_score += high_risk_features[feature] * count
-            risk_factors.append(f"{feature}: {count}개")
-        elif feature in medium_risk_features and count > 0:
-            risk_score += medium_risk_features[feature] * count
-            risk_factors.append(f"{feature}: {count}개")
-    
-    # 결과 판정
-    if risk_score >= 20:
-        result = "악성 PDF (높은 위험)"
-        confidence = "높음"
-    elif risk_score >= 10:
-        result = "의심스러운 PDF (중간 위험)"
-        confidence = "보통"
-    else:
-        result = "정상 PDF (낮은 위험)"
-        confidence = "낮음"
-    
-    return {
-        'result': result,
-        'risk_score': risk_score,
-        'confidence': confidence,
-        'risk_factors': risk_factors
-    }
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -179,7 +136,7 @@ def upload_file():
         file.save(filepath)
         
         try:
-            # 1. PDF 특징 추출 (사용자 방식)
+            # 1. PDF 특징 추출
             features_dict = extract_feature_from_pdf(filepath)
             
             if features_dict.get('error', False):
@@ -189,28 +146,23 @@ def upload_file():
             # 2. 원본 pdfid 출력 (웹 표시용)
             pdfid_output = extract_pdf_features(filepath)
             
-            # 3. AI 모델 로드 시도
+            # 3. AI 모델 로드 및 예측
             model = load_model()
-            if model:
-                # 모델이 있으면 모델 예측 사용
-                feature_vector = create_model_feature_vector(features_dict)
-                prediction_result = model.predict(feature_vector)[0]
-                prediction_proba = model.predict_proba(feature_vector)[0]
-                
-                if prediction_result == 1:
-                    result = "악성 PDF (AI 모델 판정)"
-                    confidence = f"{prediction_proba[1]*100:.1f}%"
-                else:
-                    result = "정상 PDF (AI 모델 판정)"
-                    confidence = f"{prediction_proba[0]*100:.1f}%"
-                
-                analysis_method = "AI 모델"
+            if not model:
+                os.remove(filepath)
+                return jsonify({'error': 'AI 모델을 로드할 수 없습니다.'}), 500
+            
+            # 모델 예측 수행
+            feature_vector = create_model_feature_vector(features_dict)
+            prediction_result = model.predict(feature_vector)[0]
+            prediction_proba = model.predict_proba(feature_vector)[0]
+            
+            if prediction_result == 1:
+                result = "악성 PDF (AI 모델 판정)"
+                confidence = f"{prediction_proba[1]*100:.1f}%"
             else:
-                # 모델이 없으면 규칙 기반 분석 사용
-                analysis_result = analyze_pdf_maliciousness(features_dict)
-                result = analysis_result['result']
-                confidence = analysis_result['confidence']
-                analysis_method = "규칙 기반 분석"
+                result = "정상 PDF (AI 모델 판정)"
+                confidence = f"{prediction_proba[0]*100:.1f}%"
             
             # 임시 파일 삭제
             os.remove(filepath)
@@ -221,7 +173,7 @@ def upload_file():
                 'features': pdfid_output,  # 원본 pdfid 출력
                 'prediction': result,
                 'confidence': confidence,
-                'analysis_method': analysis_method,
+                'analysis_method': "AI 모델",
                 'feature_counts': features_dict  # 추출된 특징들
             })
             
