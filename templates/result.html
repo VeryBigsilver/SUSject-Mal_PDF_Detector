@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 분석 결과 - 악성 PDF 분석기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .container.malicious-theme {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border: 2px solid #dc3545;
+        }
+        .container.safe-theme {
+            background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+            border: 2px solid #28a745;
+        }
+        .container.suspicious-theme {
+            background: linear-gradient(135deg, #fffbf0 0%, #fff8e6 100%);
+            border: 2px solid #ffc107;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .malicious-theme .header {
+            border-bottom-color: #dc3545;
+        }
+        .safe-theme .header {
+            border-bottom-color: #28a745;
+        }
+        .suspicious-theme .header {
+            border-bottom-color: #ffc107;
+        }
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+        .result-title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .result-subtitle {
+            color: #666;
+            font-size: 18px;
+        }
+        .confidence-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        .confidence-high {
+            background-color: #dc3545;
+            color: white;
+        }
+        .confidence-medium {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .confidence-low {
+            background-color: #28a745;
+            color: white;
+        }
+        .detail-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .detail-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .file-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-item {
+            background-color: white;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            color: #333;
+        }
+        .feature-counts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .feature-item {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+        .feature-item.high-risk {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        .feature-item.medium-risk {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        .feature-item.low-risk {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .features {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+        }
+        
+        /* 특징 카드 스타일 */
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card.high-risk {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+        }
+        
+        .feature-card.medium-risk {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff8e6 100%);
+        }
+        
+        .feature-card.low-risk {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+        }
+        
+        .feature-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .feature-icon {
+            font-size: 24px;
+            margin-right: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .feature-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            flex: 1;
+        }
+        
+        .feature-count {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .feature-name-with-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feature-count-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .feature-card.high-risk .feature-count {
+            background: #dc3545;
+        }
+        
+        .feature-card.medium-risk .feature-count {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .feature-card.low-risk .feature-count {
+            background: #28a745;
+        }
+        
+        .feature-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-top: 8px;
+        }
+        
+        .feature-value {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #495057;
+            word-break: break-all;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .feature-value-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        
+        .feature-risk-level {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .feature-card.high-risk .feature-risk-level {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .feature-card.medium-risk .feature-risk-level {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .feature-card.low-risk .feature-risk-level {
+            background: #28a745;
+            color: white;
+        }
+        
+        .no-features-card {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px dashed #dee2e6;
+        }
+        
+        .no-features-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .no-features-text {
+            color: #666;
+            font-size: 16px;
+        }
+        .action-buttons {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .btn {
+            padding: 12px 24px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+        }
+        .risk-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .malicious-theme .risk-summary {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .safe-theme .risk-summary {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        }
+        .suspicious-theme .risk-summary {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+        .risk-summary h2 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+        .risk-summary p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .result-title {
+                font-size: 24px;
+            }
+            .feature-counts {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .btn {
+                display: block;
+                margin: 10px auto;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header">
+            <div class="result-icon" id="resultIcon">🔍</div>
+            <div class="result-title" id="resultTitle">분석 결과</div>
+            <div class="result-subtitle" id="resultSubtitle">
+                <span id="predictionText">분석 중...</span>
+                <span class="confidence-badge" id="confidenceBadge">신뢰도: 계산 중...</span>
+            </div>
+        </div>
+
+        <div class="risk-summary" id="riskSummary">
+            <h2>위험도 요약</h2>
+            <p id="riskDescription">분석 결과를 기다리는 중...</p>
+        </div>
+
+        <div class="detail-section">
+            <h3>📄 파일 정보</h3>
+            <div class="file-info">
+                <div class="info-item">
+                    <div class="info-label">파일명</div>
+                    <div class="info-value" id="filename">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">분석 방법</div>
+                    <div class="info-value" id="analysisMethod">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">분석 시간</div>
+                    <div class="info-value" id="analysisTime">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <h3>🔍 추출된 특징</h3>
+            <div class="feature-cards" id="featureCards">
+                <div class="feature-card">
+                    <div class="feature-card-header">
+                        <div class="feature-icon">⚠️</div>
+                        <div class="feature-name">분석 중...</div>
+                        <div class="feature-count">0</div>
+                    </div>
+                    <div class="feature-description">
+                        특징 추출 중입니다. 잠시 후 다시 시도해주세요.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons" id="actionButtons">
+            <a href="/" class="btn btn-primary">새로운 파일 분석</a>
+        </div>
+    </div>
+
+    <script>
+        // 세션 스토리지에서 데이터 가져오기
+        const resultData = sessionStorage.getItem('pdfAnalysisResult');
+        
+        console.log('세션 스토리지에서 가져온 데이터:', resultData);
+        
+        if (resultData) {
+            try {
+                const data = JSON.parse(resultData);
+                console.log('파싱된 데이터:', data);
+                displayResult(data);
+                // 데이터를 사용한 후 세션 스토리지에서 제거
+                sessionStorage.removeItem('pdfAnalysisResult');
+            } catch (e) {
+                console.error('데이터 파싱 오류:', e);
+                console.error('원본 데이터:', resultData);
+                showError('결과 데이터를 불러오는 중 오류가 발생했습니다. 오류: ' + e.message);
+            }
+        } else {
+            console.log('세션 스토리지에 데이터가 없습니다.');
+            showError('분석 결과 데이터가 없습니다. 메인 페이지에서 파일을 업로드해주세요.');
+        }
+
+        function displayResult(data) {
+            // 결과에 따른 아이콘과 스타일 설정
+            let resultIcon = '🔍';
+            let resultTitle = '분석 완료';
+            let confidenceClass = 'confidence-low';
+            let riskDescription = '분석이 완료되었습니다.';
+            let actionButtons = '';
+            let containerClass = '';
+
+            if (data.prediction.includes('악성')) {
+                resultIcon = '⚠️';
+                resultTitle = '악성 PDF 발견!';
+                confidenceClass = 'confidence-high';
+                riskDescription = '이 PDF 파일은 악성코드를 포함하고 있을 가능성이 높습니다. 즉시 삭제하시기 바랍니다.';
+                containerClass = 'malicious-theme';
+                actionButtons = `
+                    <a href="/" class="btn btn-danger">새로운 파일 분석</a>
+                `;
+            } else if (data.prediction.includes('의심스러운')) {
+                resultIcon = '🤔';
+                resultTitle = '의심스러운 PDF';
+                confidenceClass = 'confidence-medium';
+                riskDescription = '이 PDF 파일은 일부 의심스러운 요소를 포함하고 있습니다. 주의해서 사용하시기 바랍니다.';
+                containerClass = 'suspicious-theme';
+                actionButtons = `
+                    <a href="/" class="btn btn-warning">새로운 파일 분석</a>
+                `;
+            } else {
+                resultIcon = '✅';
+                resultTitle = '안전한 PDF';
+                confidenceClass = 'confidence-low';
+                riskDescription = '이 PDF 파일은 안전합니다. 정상적으로 사용하실 수 있습니다.';
+                containerClass = 'safe-theme';
+                actionButtons = `
+                    <a href="/" class="btn btn-success">새로운 파일 분석</a>
+                `;
+            }
+
+            // 결과 표시
+            document.getElementById('resultIcon').textContent = resultIcon;
+            document.getElementById('resultTitle').textContent = resultTitle;
+            document.getElementById('predictionText').textContent = data.prediction;
+            document.getElementById('confidenceBadge').textContent = `신뢰도: ${data.confidence}`;
+            document.getElementById('confidenceBadge').className = `confidence-badge ${confidenceClass}`;
+            document.getElementById('riskDescription').textContent = riskDescription;
+
+            // 파일 정보 표시
+            document.getElementById('filename').textContent = data.filename || '-';
+            document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
+            document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
+
+            // 특징 카드 표시
+            let featureCardsHTML = '';
+            let totalFeatures = 0;
+            let allFeatures = [];
+            
+            if (data.feature_counts) {
+                for (const [feature, count] of Object.entries(data.feature_counts)) {
+                    if (count > 0 && feature !== 'is_pdf' && feature !== 'error' && feature !== 'size') {
+                        totalFeatures += count;
+                        let riskClass = 'low-risk';
+                        let riskLevel = '안전';
+                        let riskScore = 0; // 정렬을 위한 점수
+                        let description = '이 특징은 일반적으로 안전합니다.';
+                        
+                        // 특징별 상세 설명
+                        const featureDescriptions = {
+                            // 기본 PDF 구조 특징들
+                            'obj': '객체 수를 나타냅니다. PDF를 구성하는 기본 단위들의 개수입니다.',
+                            'endobj': '객체가 끝나는 지점을 나타냅니다. PDF 구조의 구분자입니다.',
+                            'stream': '데이터 스트림을 나타냅니다. 실제 내용이 담긴 데이터 블록입니다.',
+                            'endstream': '스트림이 끝나는 지점을 나타냅니다. 데이터 블록의 종료 지점입니다.',
+                            'xref': '참조 테이블을 나타냅니다. PDF 내 객체들의 위치를 기록한 인덱스입니다.',
+                            'trailer': '문서 정보를 담은 영역입니다. PDF의 메타데이터가 포함됩니다.',
+                            'startxref': 'Xref 시작 위치를 나타냅니다. 참조 테이블의 시작점입니다.',
+                            
+                            // 페이지 및 문서 구조
+                            '/Page': '페이지 수를 나타냅니다. PDF 문서의 총 페이지 수입니다.',
+                            
+                            // 보안 관련 특징들
+                            '/Encrypt': '암호화 정보를 나타냅니다. 문서가 암호화되어 있을 수 있습니다.',
+                            '/ObjStm': '객체 스트림을 나타냅니다. 압축된 객체 데이터입니다.',
+                            
+                            // 스크립트 및 실행 관련 (높은 위험)
+                            '/JS': '자바스크립트 코드의 존재 여부를 나타냅니다. 악성코드 실행 가능성이 있습니다.',
+                            '/JavaScript': '자바스크립트 코드를 나타냅니다. 긴 표기법으로 된 스크립트입니다.',
+                            '/AA': '자동 실행 동작을 나타냅니다. 문서 열 때 자동으로 실행되는 기능입니다.',
+                            '/OpenAction': '문서를 열 때 실행되는 동작을 나타냅니다. 자동 실행 스크립트입니다.',
+                            
+                            // 폼 및 인터랙션
+                            '/AcroForm': '입력 폼 정보를 나타냅니다. 사용자 입력을 받는 필드들입니다.',
+                            '/XFA': 'XML 기반 폼을 나타냅니다. 폼 안에 스크립트가 포함될 수 있습니다.',
+                            
+                            // 멀티미디어 및 외부 리소스
+                            '/JBIG2Decode': 'JBIG2 압축 이미지를 나타냅니다. 특수한 이미지 압축 방식입니다.',
+                            '/RichMedia': '멀티미디어 포함 여부를 나타냅니다. 동영상, 오디오 등이 포함될 수 있습니다.',
+                            
+                            // 외부 실행 및 파일 (높은 위험)
+                            '/Launch': '외부 프로그램 실행 명령을 나타냅니다. 시스템 명령어 실행 가능성이 있습니다.',
+                            '/EmbeddedFile': '문서 안에 첨부된 파일을 나타냅니다. 숨겨진 파일이 포함될 수 있습니다.',
+                            
+                            // 외부 링크
+                            '/URI': '외부 웹 주소 링크를 나타냅니다. 외부 사이트로 연결되는 링크입니다.',
+                            
+                            // 색상 정보
+                            '/Colors > 2^24': '고해상도 색상 정보를 나타냅니다. 24비트 이상의 색상 데이터입니다.',
+                            
+                            // 차이값 특징들
+                            'obj_diff': '객체 시작과 끝의 차이를 나타냅니다. PDF 구조의 일관성을 확인합니다.',
+                            'stream_diff': '스트림 시작과 끝의 차이를 나타냅니다. 데이터 블록의 일관성을 확인합니다.',
+                            'xref_diff': '참조 테이블 시작과 끝의 차이를 나타냅니다. 인덱스의 일관성을 확인합니다.',
+                            
+                            // 파일 정보
+                            'size': '파일 크기를 나타냅니다. PDF 문서의 전체 크기입니다.',
+                            'is_pdf': 'PDF 파일 여부를 나타냅니다. 유효한 PDF 문서인지 확인합니다.',
+                            'error': '분석 오류를 나타냅니다. 파일 분석 중 문제가 발생했습니다.'
+                        };
+                        
+                        // 특징별 설명 가져오기
+                        if (featureDescriptions[feature]) {
+                            description = featureDescriptions[feature];
+                        }
+                        
+                        // 위험도 분류 및 점수 설정
+                        if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia'].includes(feature)) {
+                            riskClass = 'high-risk';
+                            riskLevel = '높은 위험';
+                            riskScore = 3;
+                        } else if (['/Encrypt', '/ObjStm', '/XFA', '/URI', '/JBIG2Decode'].includes(feature)) {
+                            riskClass = 'medium-risk';
+                            riskLevel = '중간 위험';
+                            riskScore = 2;
+                        } else {
+                            riskScore = 1;
+                        }
+                        
+                        // 특징의 실제 값 가져오기
+                        let featureValue = '';
+                        if (data.features && data.features[feature]) {
+                            featureValue = data.features[feature];
+                        } else if (data.feature_details && data.feature_details[feature]) {
+                            featureValue = data.feature_details[feature];
+                        }
+                        
+                        // 값이 너무 길면 잘라서 표시
+                        let displayValue = featureValue;
+                        let isTruncated = false;
+                        if (featureValue && featureValue.length > 200) {
+                            displayValue = featureValue.substring(0, 200) + '...';
+                            isTruncated = true;
+                        }
+                        
+                        // 모든 특징을 배열에 추가
+                        allFeatures.push({
+                            feature: feature,
+                            count: count,
+                            riskClass: riskClass,
+                            riskLevel: riskLevel,
+                            riskScore: riskScore,
+                            description: description,
+                            featureValue: featureValue,
+                            displayValue: displayValue,
+                            isTruncated: isTruncated
+                        });
+                    }
+                }
+                
+                // 위험도 순으로 정렬 (높은 위험 -> 중간 위험 -> 안전)
+                allFeatures.sort((a, b) => {
+                    if (b.riskScore !== a.riskScore) {
+                        return b.riskScore - a.riskScore;
+                    }
+                    // 위험도가 같으면 특징 이름으로 정렬
+                    return a.feature.localeCompare(b.feature);
+                });
+                
+                // 정렬된 특징들을 HTML로 변환
+                for (const featureData of allFeatures) {
+                    featureCardsHTML += `
+                        <div class="feature-card ${featureData.riskClass}">
+                            <div class="feature-card-header">
+                                <div class="feature-icon">${getFeatureIcon(featureData.feature)}</div>
+                                <div class="feature-name-with-count">
+                                    <div class="feature-name">${featureData.feature}</div>
+                                    <span class="feature-count-badge">${featureData.count}</span>
+                                </div>
+                            </div>
+                            <div class="feature-description">
+                                ${featureData.description}
+                            </div>
+                            ${featureData.featureValue ? `
+                                <div class="feature-value-label">발견된 값:</div>
+                                <div class="feature-value" 
+                                     title="${featureData.isTruncated ? '전체 값을 보려면 클릭하세요' : ''}"
+                                     data-full-value="${featureData.featureValue}">
+                                    ${featureData.displayValue}
+                                </div>
+                            ` : ''}
+                            <div class="feature-risk-level">
+                                ${featureData.riskLevel}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // 특징이 없을 경우
+            if (featureCardsHTML === '') {
+                featureCardsHTML = `
+                    <div class="no-features-card">
+                        <div class="no-features-icon">✅</div>
+                        <div class="no-features-text">추출된 특징이 없습니다. 안전한 PDF일 수 있습니다.</div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('featureCards').innerHTML = featureCardsHTML;
+
+            // 특징 값 클릭 이벤트 추가
+            document.querySelectorAll('.feature-value').forEach(element => {
+                element.addEventListener('click', function() {
+                    const currentText = this.textContent;
+                    const fullText = this.getAttribute('data-full-value');
+                    
+                    if (fullText && currentText.includes('...')) {
+                        this.textContent = fullText;
+                        this.style.maxHeight = 'none';
+                        this.style.overflow = 'visible';
+                    } else if (fullText) {
+                        this.textContent = fullText.substring(0, 200) + '...';
+                        this.style.maxHeight = '100px';
+                        this.style.overflow = 'auto';
+                    }
+                });
+            });
+
+            // 액션 버튼 표시
+            document.getElementById('actionButtons').innerHTML = actionButtons;
+            document.querySelector('.container').className = containerClass;
+        }
+
+        function getFeatureIcon(feature) {
+            if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia'].includes(feature)) {
+                return '⚠️'; // 높은 위험
+            } else if (['/Encrypt', '/ObjStm', '/XFA', '/URI', '/JBIG2Decode'].includes(feature)) {
+                return '🤔'; // 중간 위험
+            } else {
+                return '✅'; // 안전
+            }
+        }
+
+        function getRiskLevelText(riskClass) {
+            if (riskClass === 'high-risk') {
+                return '높은 위험';
+            } else if (riskClass === 'medium-risk') {
+                return '중간 위험';
+            } else if (riskClass === 'low-risk') {
+                return '안전';
+            }
+            return '알 수 없음';
+        }
+
+        function showError(message) {
+            document.getElementById('resultIcon').textContent = '❌';
+            document.getElementById('resultTitle').textContent = '오류 발생';
+            document.getElementById('predictionText').textContent = message;
+            document.getElementById('riskDescription').textContent = '분석 중 오류가 발생했습니다.';
+        }
+    </script>
+</body>
+</html> 
