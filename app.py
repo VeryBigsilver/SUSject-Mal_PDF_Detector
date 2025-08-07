@@ -61,6 +61,7 @@ def extract_feature_from_pdf(pdf_path):
                               capture_output=True, text=True, check=True)
         
         # pdfid 출력 파싱
+        extracted_features = False
         for line in result.stdout.strip().split('\n'):
             if line.startswith(' '):
                 parts = line.strip().split()
@@ -68,6 +69,13 @@ def extract_feature_from_pdf(pdf_path):
                     feature_name = ' '.join(parts[:-1])
                     feature_count = int(parts[-1])
                     features[feature_name] = feature_count
+                    extracted_features = True
+        
+        # 아무 특징도 추출되지 않으면 손상된 PDF로 판단
+        if not extracted_features:
+            features['corrupted'] = True
+            features['error'] = True
+            return features
         
         features['is_pdf'] = True
         
@@ -78,8 +86,10 @@ def extract_feature_from_pdf(pdf_path):
         
     except subprocess.CalledProcessError as e:
         features['error'] = True
+        features['corrupted'] = True
     except Exception as e:
         features['error'] = True
+        features['corrupted'] = True
     
     return features
 
@@ -141,7 +151,10 @@ def upload_file():
             
             if features_dict.get('error', False):
                 os.remove(filepath)
-                return jsonify({'error': 'PDF 파일 분석 중 오류가 발생했습니다.'}), 500
+                if features_dict.get('corrupted', False):
+                    return jsonify({'error': '손상된 PDF 파일입니다. 파일이 올바른 PDF 형식이 아니거나 손상되었습니다.'}), 400
+                else:
+                    return jsonify({'error': 'PDF 파일 분석 중 오류가 발생했습니다.'}), 500
             
             # 2. 원본 pdfid 출력 (웹 표시용)
             pdfid_output = extract_pdf_features(filepath)
