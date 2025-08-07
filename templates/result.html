@@ -111,6 +111,32 @@
         }
         .info-value {
             color: #333;
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        
+        .filename-truncated {
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .filename-truncated:hover::after {
+            content: attr(data-full-name);
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            max-width: 300px;
+            word-break: break-all;
         }
         .feature-counts {
             display: grid;
@@ -527,6 +553,27 @@
             showError('분석 결과 데이터가 없습니다. 메인 페이지에서 파일을 업로드해주세요.');
         }
 
+        function truncateFilename(filename, maxLength) {
+            if (filename.length <= maxLength) {
+                return filename;
+            }
+            
+            // 파일 확장자 보존
+            const lastDotIndex = filename.lastIndexOf('.');
+            if (lastDotIndex === -1) {
+                return filename.substring(0, maxLength - 3) + '...';
+            }
+            
+            const name = filename.substring(0, lastDotIndex);
+            const extension = filename.substring(lastDotIndex);
+            
+            if (name.length <= maxLength - 6) {
+                return name + extension;
+            }
+            
+            return name.substring(0, maxLength - 6) + '...' + extension;
+        }
+
         function displayResult(data) {
             // 손상된 PDF 파일인지 확인
             if (data.is_corrupted) {
@@ -580,7 +627,20 @@
             document.getElementById('riskDescription').textContent = riskDescription;
 
             // 파일 정보 표시
-            document.getElementById('filename').textContent = data.filename || '-';
+            const filenameElement = document.getElementById('filename');
+            const filename = data.filename || '-';
+            const truncatedFilename = truncateFilename(filename, 20);
+            
+            if (truncatedFilename !== filename) {
+                filenameElement.textContent = truncatedFilename;
+                filenameElement.className = 'info-value filename-truncated';
+                filenameElement.setAttribute('data-full-name', filename);
+                filenameElement.title = filename;
+            } else {
+                filenameElement.textContent = filename;
+                filenameElement.className = 'info-value';
+            }
+            
             document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
             document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
 
@@ -805,7 +865,20 @@
             document.getElementById('riskDescription').textContent = data.corruption_message;
             
             // 파일 정보 표시
-            document.getElementById('filename').textContent = data.filename || '-';
+            const filenameElement = document.getElementById('filename');
+            const filename = data.filename || '-';
+            const truncatedFilename = truncateFilename(filename, 20);
+            
+            if (truncatedFilename !== filename) {
+                filenameElement.textContent = truncatedFilename;
+                filenameElement.className = 'info-value filename-truncated';
+                filenameElement.setAttribute('data-full-name', filename);
+                filenameElement.title = filename;
+            } else {
+                filenameElement.textContent = filename;
+                filenameElement.className = 'info-value';
+            }
+            
             document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
             document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
             

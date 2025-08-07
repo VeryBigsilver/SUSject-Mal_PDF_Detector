@@ -141,6 +141,8 @@ def upload_file():
         return jsonify({'error': '파일이 선택되지 않았습니다.'}), 400
     
     if file and allowed_file(file.filename):
+        # 원본 파일명 보존 (한글 파일명 처리)
+        original_filename = file.filename
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
@@ -155,7 +157,7 @@ def upload_file():
                     # 손상된 파일 정보를 포함한 결과 반환
                     return jsonify({
                         'success': True,
-                        'filename': filename,
+                        'filename': original_filename,
                         'prediction': '손상된 PDF 파일',
                         'confidence': '100%',
                         'analysis_method': '파일 구조 분석',
@@ -192,7 +194,7 @@ def upload_file():
             
             return jsonify({
                 'success': True,
-                'filename': filename,
+                'filename': original_filename,
                 'features': pdfid_output,  # 원본 pdfid 출력
                 'prediction': result,
                 'confidence': confidence,
