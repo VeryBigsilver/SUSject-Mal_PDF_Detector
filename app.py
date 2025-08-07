@@ -150,9 +150,19 @@ def upload_file():
             features_dict = extract_feature_from_pdf(filepath)
             
             if features_dict.get('error', False):
-                os.remove(filepath)
+                # 손상된 파일도 분석창으로 넘어가서 표시하도록 수정
                 if features_dict.get('corrupted', False):
-                    return jsonify({'error': '손상된 PDF 파일입니다. 파일이 올바른 PDF 형식이 아니거나 손상되었습니다.'}), 400
+                    # 손상된 파일 정보를 포함한 결과 반환
+                    return jsonify({
+                        'success': True,
+                        'filename': filename,
+                        'prediction': '손상된 PDF 파일',
+                        'confidence': '100%',
+                        'analysis_method': '파일 구조 분석',
+                        'feature_counts': features_dict,
+                        'is_corrupted': True,
+                        'corruption_message': '파일이 올바른 PDF 형식이 아니거나 손상되었습니다.'
+                    })
                 else:
                     return jsonify({'error': 'PDF 파일 분석 중 오류가 발생했습니다.'}), 500
             

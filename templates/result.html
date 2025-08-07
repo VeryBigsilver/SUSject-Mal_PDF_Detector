@@ -315,6 +315,27 @@
             border: 2px dashed #dee2e6;
         }
         
+        .corrupted-file-card {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+        }
+        
+        .corrupted-file-card h4 {
+            color: #721c24;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .corrupted-file-card p {
+            color: #721c24;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
         .no-features-icon {
             font-size: 48px;
             margin-bottom: 15px;
@@ -507,6 +528,12 @@
         }
 
         function displayResult(data) {
+            // 손상된 PDF 파일인지 확인
+            if (data.is_corrupted) {
+                displayCorruptedFile(data);
+                return;
+            }
+            
             // 결과에 따른 아이콘과 스타일 설정
             let resultIcon = '🔍';
             let resultTitle = '분석 완료';
@@ -766,6 +793,45 @@
                 return '안전';
             }
             return '알 수 없음';
+        }
+
+        function displayCorruptedFile(data) {
+            // 손상된 PDF 파일 전용 표시
+            document.getElementById('resultIcon').textContent = '🚫';
+            document.getElementById('resultTitle').textContent = '손상된 PDF 파일';
+            document.getElementById('predictionText').textContent = data.prediction;
+            document.getElementById('confidenceBadge').textContent = `신뢰도: ${data.confidence}`;
+            document.getElementById('confidenceBadge').className = 'confidence-badge confidence-high';
+            document.getElementById('riskDescription').textContent = data.corruption_message;
+            
+            // 파일 정보 표시
+            document.getElementById('filename').textContent = data.filename || '-';
+            document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
+            document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
+            
+            // 특징 카드에 손상 정보 표시
+            let featureCardsHTML = `
+                <div class="corrupted-file-card">
+                    <div class="no-features-icon">🚫</div>
+                    <div class="no-features-text">
+                        <h4>손상된 PDF 파일</h4>
+                        <p>${data.corruption_message}</p>
+                        <p><strong>파일명:</strong> ${data.filename}</p>
+                        <p><strong>분석 방법:</strong> ${data.analysis_method}</p>
+                        <p><strong>권장사항:</strong> 다른 PDF 파일을 업로드해주세요.</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('featureCards').innerHTML = featureCardsHTML;
+            
+            // 액션 버튼
+            document.getElementById('actionButtons').innerHTML = `
+                <a href="/" class="btn btn-danger">새로운 파일 분석</a>
+            `;
+            
+            // 컨테이너 스타일
+            document.querySelector('.container').className = 'container malicious-theme';
         }
 
         function showError(message) {
