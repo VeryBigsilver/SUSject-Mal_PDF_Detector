@@ -57,6 +57,13 @@
             cursor: pointer;
             font-size: 16px;
             margin: 10px;
+            position: relative;
+            z-index: 10;
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .upload-btn:hover {
             background-color: #0056b3;
@@ -603,7 +610,7 @@
         
         <div class="upload-area" id="uploadArea">
             <p>PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
-            <input type="file" id="fileInput" accept=".pdf" style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
+            <input type="file" id="fileInput" accept=".pdf" style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; z-index: 1;">
             <button class="upload-btn" id="uploadBtn">
                 파일 선택
             </button>
@@ -776,24 +783,34 @@
         uploadBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            fileInput.click();
+            e.stopImmediatePropagation();
+            setTimeout(() => {
+                fileInput.click();
+            }, 10);
+            return false;
         });
 
         // 업로드 영역 클릭 이벤트 (모바일 호환성)
         uploadArea.addEventListener('click', (e) => {
-            // 버튼이 아닌 영역을 클릭했을 때만 파일 선택 트리거
-            if (e.target !== uploadBtn && e.target !== fileInput) {
-                fileInput.click();
+            // 버튼이나 파일 입력 요소를 클릭한 경우는 제외
+            if (e.target === uploadBtn || e.target === fileInput || e.target.closest('.upload-btn')) {
+                return;
             }
+            setTimeout(() => {
+                fileInput.click();
+            }, 10);
         });
 
         // 모바일 터치 이벤트 지원
         uploadArea.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            // 터치 이벤트에서도 파일 선택 트리거
-            if (e.target !== uploadBtn && e.target !== fileInput) {
-                fileInput.click();
+            // 버튼이나 파일 입력 요소를 터치한 경우는 제외
+            if (e.target === uploadBtn || e.target === fileInput || e.target.closest('.upload-btn')) {
+                return;
             }
+            e.preventDefault();
+            setTimeout(() => {
+                fileInput.click();
+            }, 10);
         });
 
         function handleFile(file) {
