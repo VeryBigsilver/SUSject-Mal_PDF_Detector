@@ -31,6 +31,12 @@
             margin: 20px 0;
             background-color: #fafafa;
             transition: border-color 0.3s;
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         .upload-area:hover {
             border-color: #007bff;
@@ -597,8 +603,8 @@
         
         <div class="upload-area" id="uploadArea">
             <p>PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
-            <input type="file" id="fileInput" accept=".pdf">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".pdf" style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
+            <button class="upload-btn" id="uploadBtn">
                 파일 선택
             </button>
         </div>
@@ -722,6 +728,7 @@
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
         const result = document.getElementById('result');
         const progressModal = document.getElementById('progressModal');
         const progressFill = document.getElementById('progressFill');
@@ -758,10 +765,34 @@
             }
         });
 
-        // 파일 선택 이벤트
+        // 파일 선택 이벤트 (모바일 호환성 개선)
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
+            }
+        });
+
+        // 업로드 버튼 클릭 이벤트 (모바일 호환성)
+        uploadBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        // 업로드 영역 클릭 이벤트 (모바일 호환성)
+        uploadArea.addEventListener('click', (e) => {
+            // 버튼이 아닌 영역을 클릭했을 때만 파일 선택 트리거
+            if (e.target !== uploadBtn && e.target !== fileInput) {
+                fileInput.click();
+            }
+        });
+
+        // 모바일 터치 이벤트 지원
+        uploadArea.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            // 터치 이벤트에서도 파일 선택 트리거
+            if (e.target !== uploadBtn && e.target !== fileInput) {
+                fileInput.click();
             }
         });
 
