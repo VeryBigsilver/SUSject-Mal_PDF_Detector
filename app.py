@@ -13,6 +13,10 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 제한
 
+# PDF 분석 도구 경로
+PDF_PARSER_PATH = 'pdf-parser.py'
+PDFDATA_PATH = 'uploads'
+
 # 업로드 폴더 생성
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -21,6 +25,61 @@ ALLOWED_EXTENSIONS = {'pdf'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def search_mz_pk_in_pdf(filename, pdf_parser_path=PDF_PARSER_PATH, pdfdata_path=PDFDATA_PATH):
+    """pdf-parser.py를 사용하여 PDF에서 MZ와 PK 문자열 검색"""
+    pdf_file_path = os.path.join(pdfdata_path, filename)
+
+    if not os.path.exists(pdf_file_path):
+        error_message = f"Error: File not found at {pdf_file_path}"
+        return error_message, error_message # Return error for both searches
+
+    mz_output = None
+    pk_output = None
+
+    try:
+        # Search for "MZ"
+        result_mz = subprocess.run(
+            ['python', pdf_parser_path, pdf_file_path, '--search', 'MZ'],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=60
+        )
+        mz_output = result_mz.stdout
+
+    except subprocess.CalledProcessError as e:
+        mz_output = f"Error executing pdf-parser.py for {filename} searching for 'MZ': {e.stderr}"
+    except FileNotFoundError:
+        mz_output = f"Error: pdf-parser.py not found at {pdf_parser_path}"
+    except subprocess.TimeoutExpired:
+        mz_output = f"Error: pdf-parser.py timed out for {filename} searching for 'MZ'"
+    except Exception as e:
+        mz_output = f"An unexpected error occurred for {filename} searching for 'MZ': {e}"
+
+    try:
+        # Search for "PK"
+        result_pk = subprocess.run(
+            ['python', pdf_parser_path, pdf_file_path, '--search', 'PK'],
+            capture_output=True,
+            check=True,
+            text=True,
+            timeout=60
+        )
+        pk_output = result_pk.stdout
+
+    except subprocess.CalledProcessError as e:
+        pk_output = f"Error executing pdf-parser.py for {filename} searching for 'PK': {e.stderr}"
+    except FileNotFoundError:
+        # Avoid repeating the error message if the file was not found in the first place
+        if "File not found" not in mz_output:
+             pk_output = f"Error: pdf-parser.py not found at {pdf_parser_path}"
+    except subprocess.TimeoutExpired:
+         pk_output = f"Error: pdf-parser.py timed out for {filename} searching for 'PK'"
+    except Exception as e:
+        pk_output = f"An unexpected error occurred for {filename} searching for 'PK': {e}"
+
+    return mz_output, pk_output
 
 def extract_pdf_features(pdf_path):
     """pdfid를 사용하여 PDF 특징 추출"""
@@ -98,11 +157,12 @@ def create_model_feature_vector(features_dict):
     # 모델 학습에 사용되지 않은 특징들 제외
     excluded_features = ['obj', 'endobj', 'stream', 'endstream', 'xref', 'startxref', 'trailer']
     
-    # 모델 학습에 사용된 특징들 (추정)
+    # 모델 학습에 사용된 특징들
     model_features = [
         'size', '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript', 
         '/AA', '/OpenAction', '/AcroForm', '/JBIG2Decode', '/RichMedia', 
         '/Launch', '/EmbeddedFile', '/XFA', '/URI', '/Colors > 2^24',
+        'has_MZ', 'has_PK',
         'obj_diff', 'stream_diff', 'xref_diff'
     ]
     
@@ -168,10 +228,21 @@ def upload_file():
                 else:
                     return jsonify({'error': 'PDF 파일 분석 중 오류가 발생했습니다.'}), 500
             
-            # 2. 원본 pdfid 출력 (웹 표시용)
+            # 2. MZ/PK 문자열 검색 (pdf-parser.py 사용)
+            mz_output, pk_output = search_mz_pk_in_pdf(filename)
+            
+            # MZ/PK 검색 결과에서 boolean feature 추출
+            has_MZ = 1 if mz_output and "MZ" in mz_output and "Error" not in mz_output else 0
+            has_PK = 1 if pk_output and "PK" in pk_output and "Error" not in pk_output else 0
+            
+            # features_dict에 MZ/PK feature 추가
+            features_dict['has_MZ'] = has_MZ
+            features_dict['has_PK'] = has_PK
+            
+            # 3. 원본 pdfid 출력 (웹 표시용)
             pdfid_output = extract_pdf_features(filepath)
             
-            # 3. AI 모델 로드 및 예측
+            # 4. AI 모델 로드 및 예측
             model = load_model()
             if not model:
                 os.remove(filepath)

@@ -708,7 +708,11 @@
                             // 파일 정보
                             'size': '파일 크기를 나타냅니다. PDF 문서의 전체 크기입니다.',
                             'is_pdf': 'PDF 파일 여부를 나타냅니다. 유효한 PDF 문서인지 확인합니다.',
-                            'error': '분석 오류를 나타냅니다. 파일 분석 중 문제가 발생했습니다.'
+                            'error': '분석 오류를 나타냅니다. 파일 분석 중 문제가 발생했습니다.',
+                            
+                            // MZ/PK 문자열 검색 결과
+                            'has_MZ': 'PDF 내에 MZ 문자열이 발견되었습니다. 실행 파일(EXE)이 포함되어 있을 가능성이 높습니다.',
+                            'has_PK': 'PDF 내에 PK 문자열이 발견되었습니다. 압축 파일(ZIP)이 포함되어 있을 가능성이 높습니다.'
                         };
                         
                         // 특징별 설명 가져오기
@@ -717,7 +721,7 @@
                         }
                         
                         // 위험도 분류 및 점수 설정
-                        if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia'].includes(feature)) {
+                        if (['/JS', '/JavaScript', '/Launch', '/EmbeddedFile', '/OpenAction', '/AA', '/AcroForm', '/RichMedia', 'has_MZ', 'has_PK'].includes(feature)) {
                             riskClass = 'high-risk';
                             riskLevel = '높은 위험';
                             riskScore = 3;
