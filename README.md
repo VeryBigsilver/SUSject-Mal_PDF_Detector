@@ -1,4 +1,9 @@
-**for 2025 건국대학교 학술공모전**
+![License](https://img.shields.io/github/license/VeryBigsilver/SUSject-Mal_PDF_Detector.svg)
+
+![GitHub top language](https://img.shields.io/github/languages/top/VeryBigsilver/SUSject-Mal_PDF_Detector)
+
+<img src="https://www.konkuk.ac.kr/sites/konkuk/images/common/logo-top-color.png" width="120"/>    for 2025 건국대학교 학술공모전
+
 
 # PDF 악성코드 탐지 시스템
 
