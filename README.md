@@ -1,4 +1,4 @@
-![License](https://img.shields.io/github/license/VeryBigsilver/SUSject-Mal_PDF_Detector.svg)
+![License](https://img.shields.io/github/license/VeryBigsilver/SUSject-Mal_PDF_Detector)
 
 ![GitHub top language](https://img.shields.io/github/languages/top/VeryBigsilver/SUSject-Mal_PDF_Detector)
 
@@ -37,8 +37,7 @@ AI 기반 PDF 악성코드 탐지 웹 서비스입니다. PDF 파일의 특징�
 
 ### 1. 저장소 클론
 ```bash
-git clone [repository-url]
-cd PDFMalwareDetect
+git clone https://github.com/VeryBigsilver/SUSject-Mal_PDF_Detector.git
 ```
 
 ### 2. 필요한 패키지 설치
