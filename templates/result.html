@@ -861,7 +861,7 @@
 
         function displayCorruptedFile(data) {
             // 손상된 PDF 파일도 정상적인 레이아웃 사용
-            document.getElementById('resultIcon').textContent = '🚫';
+            document.getElementById('resultIcon').textContent = '⛔';
             document.getElementById('resultTitle').textContent = '손상된 PDF 파일';
             document.getElementById('predictionText').textContent = data.prediction;
             document.getElementById('confidenceBadge').textContent = `신뢰도: ${data.confidence}`;
@@ -890,7 +890,7 @@
             let featureCardsHTML = `
                 <div class="feature-card high-risk">
                     <div class="feature-card-header">
-                        <div class="feature-icon">🚫</div>
+                        <div class="feature-icon">⛔</div>
                         <div class="feature-name-with-count">
                             <div class="feature-name">파일 손상</div>
                             <span class="feature-count-badge">1</span>
