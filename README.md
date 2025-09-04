@@ -1,8 +1,6 @@
 ![License](https://img.shields.io/github/license/VeryBigsilver/SUSject-Mal_PDF_Detector)
 
-![GitHub top language](https://img.shields.io/github/languages/top/VeryBigsilver/SUSject-Mal_PDF_Detector)
-
-<img src="https://www.konkuk.ac.kr/sites/konkuk/images/common/logo-top-color.png" width="120"/>    for 2025 건국대학교 학술공모전
+<img src="https://www.konkuk.ac.kr/sites/konkuk/images/common/logo-top-color.png" width="250"/>    for 2025 건국대학교 학술공모전
 
 
 # PDF 악성코드 탐지 시스템
@@ -93,31 +91,36 @@ PDFMalwareDetect/
 - **상세 설명**: 각 특징의 의미와 위험도
 - **실제 값**: 발견된 특징의 구체적인 내용
 
-## 🔍 분석 특징
+# 🚀 구현
+
+## 🔍 분석 툴
+
+thanks for the great tool!
+
+pdfid, pdf-parser
+
+link in: https://blog.didierstevens.com/programs/pdf-tools/
+
+## 🔍 분석 데이터
+
+thanks for the great dataset!
+
+### 📋 **CIC dataset**
+Maryam Issakhani, Princy Victor, Ali Tekeoglu, and Arash Habibi Lashkari1, “PDF Malware Detection Based on Stacking Learning”, The International Conference on Information Systems Security and Privacy, February 2022
+
+link in: https://www.unb.ca/cic/datasets/pdfmal-2022.html
 
 ### 📋 **기본 PDF 구조**
-- `obj`, `endobj`: PDF 객체 구조
-- `stream`, `endstream`: 데이터 스트림
-- `xref`, `trailer`: 참조 테이블 및 메타데이터
+R. Liu, R. Joyce, C. Matuszek and C. Nicholas, "Evaluating Representativeness in PDF Malware Datasets: A Comparative Study and a New Dataset," 2023 IEEE International Conference on Big Data (BigData), Sorrento, Italy, 2023
 
-### ⚠️ **높은 위험 특징**
-- `/JS`, `/JavaScript`: 자바스크립트 코드
-- `/Launch`: 외부 프로그램 실행
-- `/EmbeddedFile`: 임베디드 파일
-- `/OpenAction`, `/AA`: 자동 실행 동작
-- `/AcroForm`, `/RichMedia`: 폼 및 멀티미디어
+link in: https://ieee-dataport.org/documents/pdfrep
 
-### 🟡 **중간 위험 특징**
-- `/Encrypt`: 암호화 정보
-- `/ObjStm`: 압축된 객체 데이터
-- `/XFA`: XML 기반 폼
-- `/URI`: 외부 웹 링크
-- `/JBIG2Decode`: 특수 이미지 압축
+|        | 정상   | 악성    |
+| ------ | ---- | ----- |
+| CIC    | 7500 | 0     |
+| pdfREP | 0    | 19853 |
 
-### ✅ **안전한 특징**
-- `/Page`: 페이지 수
-- 기본 PDF 구조 요소들
-- 차이값 특징들 (`obj_diff`, `stream_diff`, `xref_diff`)
+전체 샘플 수: 27353
 
 ## 🛠️ 기술 스택
 
@@ -134,6 +137,10 @@ PDFMalwareDetect/
 ### **AI/ML**
 - **Random Forest**: 악성 PDF 분류 모델
 - **특징 엔지니어링**: PDF 구조 기반 특징 추출
+
+| 정확도(accuracy) | 정밀도(precision) | 재현율(recall) | f1-score |
+| ------------- | -------------- | ----------- | -------- |
+| 0.9927        | 0.9931         | 0.9968      | 0.9950   |
 
 ## 🔒 보안 특징
 
@@ -152,11 +159,6 @@ PDFMalwareDetect/
 ### **기능 개선**
 - [ ] APT 공격에 대한 탐지 강화
 - [ ] 추가 PDF 특징 분석
-
-### **사용자 경험**
-- [ ] 분석 히스토리 저장
-- [ ] 결과 내보내기 기능
-- [ ] 다국어 지원
 
 ---
 
