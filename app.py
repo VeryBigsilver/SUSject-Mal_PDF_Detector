@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 제한
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB 제한
 
 # PDF 분석 도구 경로
 PDF_PARSER_PATH = 'pdf-parser.py'
