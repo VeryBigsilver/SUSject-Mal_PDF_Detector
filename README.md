@@ -146,7 +146,7 @@ link in: https://ieee-dataport.org/documents/pdfrep
 
 ### **파일 처리**
 - 임시 저장 후 즉시 삭제
-- 파일 형식 및 크기 검증
+- 파일 형식 검증
 - 개인정보 보호
 
 ### **분석 과정**
