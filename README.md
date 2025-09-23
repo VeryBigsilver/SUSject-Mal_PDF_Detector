@@ -110,7 +110,7 @@ Maryam Issakhani, Princy Victor, Ali Tekeoglu, and Arash Habibi Lashkari1, “PD
 
 link in: https://www.unb.ca/cic/datasets/pdfmal-2022.html
 
-### 📋 **기본 PDF 구조**
+### 📋 **PDFREP dataset**
 R. Liu, R. Joyce, C. Matuszek and C. Nicholas, "Evaluating Representativeness in PDF Malware Datasets: A Comparative Study and a New Dataset," 2023 IEEE International Conference on Big Data (BigData), Sorrento, Italy, 2023
 
 link in: https://ieee-dataport.org/documents/pdfrep
