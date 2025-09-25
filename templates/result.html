@@ -641,7 +641,13 @@
                 filenameElement.className = 'info-value';
             }
             
-            document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
+            // 분석 방법과 모델 타입 표시
+            let analysisText = data.analysis_method || '-';
+            if (data.model_type) {
+                const modelName = data.model_type === 'randomforest' ? 'Random Forest' : 'Isolation Forest + Random Forest';
+                analysisText += ` (${modelName})`;
+            }
+            document.getElementById('analysisMethod').textContent = analysisText;
             document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
 
             // 특징 카드 표시
@@ -883,7 +889,13 @@
                 filenameElement.className = 'info-value';
             }
             
-            document.getElementById('analysisMethod').textContent = data.analysis_method || '-';
+            // 분석 방법과 모델 타입 표시
+            let analysisText = data.analysis_method || '-';
+            if (data.model_type) {
+                const modelName = data.model_type === 'randomforest' ? 'Random Forest' : 'Isolation Forest + Random Forest';
+                analysisText += ` (${modelName})`;
+            }
+            document.getElementById('analysisMethod').textContent = analysisText;
             document.getElementById('analysisTime').textContent = new Date().toLocaleString('ko-KR');
             
             // 특징 카드에 손상 정보를 정상적인 카드 형태로 표시

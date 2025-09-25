@@ -561,6 +561,87 @@
             50% { opacity: 1; }
         }
 
+        /* 모델 선택 스타일 */
+        .model-selection {
+            margin: 30px 0;
+            padding: 25px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .model-selection h3 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .model-options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .model-option {
+            cursor: pointer;
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+        }
+
+        .model-option input[type="radio"] {
+            display: none;
+        }
+
+        .model-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-option input[type="radio"]:checked + .model-card {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .model-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
+        }
+
+        .model-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .model-info h4 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .model-info p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
         /* 모바일 반응형 */
         @media (max-width: 768px) {
             .feature-items {
@@ -588,6 +669,16 @@
             .project-description {
                 font-size: 14px;
             }
+
+            .model-options {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .model-option {
+                width: 100%;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -595,6 +686,33 @@
     <div class="container">
         <h1>🔍 악성 PDF 분석기</h1>
         
+        <!-- 모델 선택 섹션 -->
+        <div class="model-selection">
+            <h3>🤖 AI 모델 선택</h3>
+            <div class="model-options">
+                <label class="model-option">
+                    <input type="radio" name="modelType" value="randomforest" checked>
+                    <div class="model-card">
+                        <div class="model-icon">🌲</div>
+                        <div class="model-info">
+                            <h4>Random Forest</h4>
+                            <p>기본 Random Forest 모델</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="model-option">
+                    <input type="radio" name="modelType" value="isolate_randomforest">
+                    <div class="model-card">
+                        <div class="model-icon">🔍</div>
+                        <div class="model-info">
+                            <h4>Isolation Forest + Random Forest</h4>
+                            <p>이상치 탐지와 분류를 결합한 고급 모델</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
         <div class="upload-area" id="uploadArea">
             <p>PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
             <input type="file" id="fileInput" accept=".pdf">
@@ -767,12 +885,16 @@
                 return;
             }
 
+            // 선택된 모델 타입 가져오기
+            const selectedModel = document.querySelector('input[name="modelType"]:checked').value;
+
             // 진행률 모달 표시
             showProgressModal();
             simulateProgress();
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('model_type', selectedModel);
 
             fetch('/upload', {
                 method: 'POST',
