@@ -593,7 +593,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 악성 PDF 분석기</h1>
+        <h1>
+            🔍 악성 PDF 분석기
+            <button id="modeToggle" class="upload-btn" style="margin-left:10px; padding:6px 10px; font-size:14px; background:#6c757d;">
+                RF
+            </button>
+        </h1>
         
         <div class="upload-area" id="uploadArea">
             <p>PDF 파일을 여기에 드래그하거나 클릭하여 선택하세요</p>
@@ -773,6 +778,7 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('mode', window.__analysisMode === 'both' ? 'both' : 'rf');
 
             fetch('/upload', {
                 method: 'POST',
@@ -796,6 +802,15 @@
                 showResult('업로드 중 오류가 발생했습니다: ' + error.message, 'error');
             });
         }
+
+        // 분석 모드 토글 (RF <-> RF+GNN)
+        window.__analysisMode = 'rf';
+        const modeToggle = document.getElementById('modeToggle');
+        modeToggle.addEventListener('click', () => {
+            window.__analysisMode = window.__analysisMode === 'rf' ? 'both' : 'rf';
+            modeToggle.textContent = window.__analysisMode === 'rf' ? 'RF' : 'RF+GNN';
+            modeToggle.style.background = window.__analysisMode === 'rf' ? '#6c757d' : '#17a2b8';
+        });
 
         function showProgressModal() {
             progressModal.style.display = 'block';

@@ -2,14 +2,18 @@ from flask import Flask, render_template, request, jsonify
 import os
 from werkzeug.utils import secure_filename
 from preprocess import (
-    extract_feature_from_pdf,
-    extract_pdf_features,
-    search_mz_pk_in_pdf,
+    extract_feature_from_pdf_rf,
+    extract_pdf_features_rf,
+    search_mz_pk_in_pdf_rf,
 )
 from analyze import (
-    load_model,
-    create_model_feature_vector,
-    predict_with_model,
+    load_model_rf,
+    create_model_feature_vector_rf,
+    predict_with_model_rf,
+    load_model_gnn,
+    run_gnn_on_pdf,
+    combine_rf_gnn,
+    load_all_possible_types,
 )
 
 app = Flask(__name__)
@@ -52,8 +56,11 @@ def upload_file():
         file.save(filepath)
         
         try:
-            # 1. PDF 특징 추출
-            features_dict = extract_feature_from_pdf(filepath)
+            # 모드: rf (기본), both (rf + gnn)
+            mode = request.form.get('mode', 'rf')
+
+            # 1. PDF 특징 추출 (RF)
+            features_dict = extract_feature_from_pdf_rf(filepath)
             
             if features_dict.get('error', False):
                 # 손상된 파일도 분석창으로 넘어가서 표시하도록 수정
@@ -72,8 +79,8 @@ def upload_file():
                 else:
                     return jsonify({'error': 'PDF 파일 분석 중 오류가 발생했습니다.'}), 500
             
-            # 2. MZ/PK 문자열 검색 (pdf-parser.py 사용)
-            mz_output, pk_output = search_mz_pk_in_pdf(filename)
+            # 2. MZ/PK 문자열 검색 (pdf-parser.py 사용, RF)
+            mz_output, pk_output = search_mz_pk_in_pdf_rf(filename)
             
             # MZ/PK 검색 결과에서 boolean feature 추출
             has_MZ = 1 if mz_output and "MZ" in mz_output and "Error" not in mz_output else 0
@@ -83,38 +90,70 @@ def upload_file():
             features_dict['has_MZ'] = has_MZ
             features_dict['has_PK'] = has_PK
             
-            # 3. 원본 pdfid 출력 (웹 표시용)
-            pdfid_output = extract_pdf_features(filepath)
+            # 3. 원본 pdfid 출력 (웹 표시용, RF)
+            pdfid_output = extract_pdf_features_rf(filepath)
             
-            # 4. AI 모델 로드 및 예측
-            model = load_model()
+            # 4. AI 모델 로드 및 예측 (RF)
+            model = load_model_rf()
             if not model:
                 os.remove(filepath)
                 return jsonify({'error': 'AI 모델을 로드할 수 없습니다.'}), 500
             
             # 모델 예측 수행
-            feature_vector = create_model_feature_vector(features_dict)
-            prediction_result, prediction_proba = predict_with_model(model, feature_vector)
+            feature_vector = create_model_feature_vector_rf(features_dict)
+            prediction_result, prediction_proba = predict_with_model_rf(model, feature_vector)
             
-            if prediction_result == 1:
-                result = "악성 PDF (AI 모델 판정)"
-                confidence = f"{prediction_proba[1]*100:.1f}%"
-            else:
-                result = "정상 PDF (AI 모델 판정)"
-                confidence = f"{prediction_proba[0]*100:.1f}%"
-            
-            # 임시 파일 삭제
-            os.remove(filepath)
-            
-            return jsonify({
+            rf_prob_mal = float(prediction_proba[1])
+
+            # 기본 응답 (RF 단독)
+            final_prediction_label = "악성 PDF (AI 모델 판정)" if prediction_result == 1 else "정상 PDF (AI 모델 판정)"
+            final_confidence = f"{(prediction_proba[1] if prediction_result == 1 else prediction_proba[0])*100:.1f}%"
+
+            response_payload = {
                 'success': True,
                 'filename': original_filename,
-                'features': pdfid_output,  # 원본 pdfid 출력
-                'prediction': result,
-                'confidence': confidence,
-                'analysis_method': "AI 모델",
-                'feature_counts': features_dict  # 추출된 특징들
-            })
+                'features': pdfid_output,
+                'prediction': final_prediction_label,
+                'confidence': final_confidence,
+                'analysis_method': "AI 모델 (RF)",
+                'feature_counts': features_dict,
+                'rf_probability_malicious': rf_prob_mal,
+            }
+
+            # 5. both 모드: RF + GNN 결합 판단
+            if mode == 'both':
+                all_types = load_all_possible_types()  # 기본 경로: model/all_possible_types.json
+                if not all_types:
+                    # 타입 리스트가 없으면 GNN을 건너뛰고 경고만 표시
+                    response_payload['gnn_notice'] = 'GNN 타입 리스트를 찾을 수 없어 RF만 수행했습니다.'
+                    response_payload['analysis_method'] = "AI 모델 (RF)"
+                else:
+                    # in_channels = len(types) + 6 규칙으로 모델 구성 후 로드 시도
+                    in_channels = len(all_types) + 6
+                    gnn_model = load_model_gnn('model/model_gnn.pt', in_channels=in_channels)
+                    if gnn_model is None:
+                        response_payload['gnn_notice'] = 'GNN 모델을 로드할 수 없어 RF만 수행했습니다.'
+                        response_payload['analysis_method'] = "AI 모델 (RF)"
+                    else:
+                        gnn_out = run_gnn_on_pdf(filepath, all_types, gnn_model)
+                        gnn_error = float(gnn_out.get('reconstruction_error', float('nan')))
+                        combo = combine_rf_gnn(rf_prob_mal, gnn_error)
+
+                        # 최종 레이블/정보 갱신
+                        response_payload['analysis_method'] = "AI 모델 (RF + GNN)"
+                        response_payload['gnn_reconstruction_error'] = gnn_error
+                        response_payload['combined_prediction'] = int(combo['prediction'])
+                        if combo['prediction'] == 1:
+                            response_payload['prediction'] = "악성 PDF (결합 판정)"
+                            response_payload['confidence'] = f"RF {rf_prob_mal*100:.1f}% | GNN err {gnn_error:.3f}"
+                        else:
+                            response_payload['prediction'] = "정상 PDF (결합 판정)"
+                            response_payload['confidence'] = f"RF {(1.0-rf_prob_mal)*100:.1f}% | GNN err {gnn_error:.3f}"
+
+            # 임시 파일 삭제 (모든 분석 종료 후)
+            os.remove(filepath)
+
+            return jsonify(response_payload)
             
         except Exception as e:
             # 오류 발생 시 파일 삭제
