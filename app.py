@@ -1,21 +1,20 @@
 from flask import Flask, render_template, request, jsonify
 import os
-import pickle
-import subprocess
-import tempfile
-import re
-import numpy as np
-import pandas as pd
 from werkzeug.utils import secure_filename
-from sklearn.preprocessing import StandardScaler
+from preprocess import (
+    extract_feature_from_pdf,
+    extract_pdf_features,
+    search_mz_pk_in_pdf,
+)
+from analyze import (
+    load_model,
+    create_model_feature_vector,
+    predict_with_model,
+)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB 제한
-
-# PDF 분석 도구 경로
-PDF_PARSER_PATH = 'pdf-parser.py'
-PDFDATA_PATH = 'uploads'
 
 # 업로드 폴더 생성
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -26,162 +25,7 @@ ALLOWED_EXTENSIONS = {'pdf'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def search_mz_pk_in_pdf(filename, pdf_parser_path=PDF_PARSER_PATH, pdfdata_path=PDFDATA_PATH):
-    """pdf-parser.py를 사용하여 PDF에서 MZ와 PK 문자열 검색"""
-    pdf_file_path = os.path.join(pdfdata_path, filename)
-
-    if not os.path.exists(pdf_file_path):
-        error_message = f"Error: File not found at {pdf_file_path}"
-        return error_message, error_message # Return error for both searches
-
-    mz_output = None
-    pk_output = None
-
-    try:
-        # Search for "MZ"
-        result_mz = subprocess.run(
-            ['python', pdf_parser_path, pdf_file_path, '--search', 'MZ'],
-            capture_output=True,
-            check=True,
-            text=True,
-            timeout=60
-        )
-        mz_output = result_mz.stdout
-
-    except subprocess.CalledProcessError as e:
-        mz_output = f"Error executing pdf-parser.py for {filename} searching for 'MZ': {e.stderr}"
-    except FileNotFoundError:
-        mz_output = f"Error: pdf-parser.py not found at {pdf_parser_path}"
-    except subprocess.TimeoutExpired:
-        mz_output = f"Error: pdf-parser.py timed out for {filename} searching for 'MZ'"
-    except Exception as e:
-        mz_output = f"An unexpected error occurred for {filename} searching for 'MZ': {e}"
-
-    try:
-        # Search for "PK"
-        result_pk = subprocess.run(
-            ['python', pdf_parser_path, pdf_file_path, '--search', 'PK'],
-            capture_output=True,
-            check=True,
-            text=True,
-            timeout=60
-        )
-        pk_output = result_pk.stdout
-
-    except subprocess.CalledProcessError as e:
-        pk_output = f"Error executing pdf-parser.py for {filename} searching for 'PK': {e.stderr}"
-    except FileNotFoundError:
-        # Avoid repeating the error message if the file was not found in the first place
-        if "File not found" not in mz_output:
-             pk_output = f"Error: pdf-parser.py not found at {pdf_parser_path}"
-    except subprocess.TimeoutExpired:
-         pk_output = f"Error: pdf-parser.py timed out for {filename} searching for 'PK'"
-    except Exception as e:
-        pk_output = f"An unexpected error occurred for {filename} searching for 'PK': {e}"
-
-    return mz_output, pk_output
-
-def extract_pdf_features(pdf_path):
-    """pdfid를 사용하여 PDF 특징 추출"""
-    try:
-        # pdfid 명령어 실행
-        result = subprocess.run(['python', 'pdfid/pdfid.py', pdf_path], 
-                              capture_output=True, text=True)
-        return result.stdout
-    except Exception as e:
-        return f"특징 추출 오류: {str(e)}"
-
-def extract_feature_from_pdf(pdf_path):
-    """사용자가 제공한 방식으로 PDF 특징 추출"""
-    features = {}
-    
-    # 기본 특징들 초기화
-    pdfid_feature_columns = [
-        'obj', 'endobj', 'stream', 'endstream', 'xref', 'trailer', 'startxref',
-        '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript', '/AA', '/OpenAction',
-        '/AcroForm', '/JBIG2Decode', '/RichMedia', '/Launch', '/EmbeddedFile',
-        '/XFA', '/URI', '/Colors > 2^24'
-    ]
-    
-    # 모든 특징을 0으로 초기화
-    for col in pdfid_feature_columns:
-        features[col] = 0
-    
-    # 파일 크기 추가
-    try:
-        features['size'] = os.path.getsize(pdf_path)
-    except:
-        features['error'] = True
-        return features
-    
-    # pdfid로 정보 추출
-    try:
-        result = subprocess.run(['python', 'pdfid/pdfid.py', pdf_path], 
-                              capture_output=True, text=True, check=True)
-        
-        # pdfid 출력 파싱
-        extracted_features = False
-        for line in result.stdout.strip().split('\n'):
-            if line.startswith(' '):
-                parts = line.strip().split()
-                if len(parts) >= 2 and parts[-1].isdigit():
-                    feature_name = ' '.join(parts[:-1])
-                    feature_count = int(parts[-1])
-                    features[feature_name] = feature_count
-                    extracted_features = True
-        
-        # 아무 특징도 추출되지 않으면 손상된 PDF로 판단
-        if not extracted_features:
-            features['corrupted'] = True
-            features['error'] = True
-            return features
-        
-        features['is_pdf'] = True
-        
-        # diff 정보 계산
-        features['obj_diff'] = abs(features.get('obj', 0) - features.get('endobj', 0))
-        features['stream_diff'] = abs(features.get('stream', 0) - features.get('endstream', 0))
-        features['xref_diff'] = abs(features.get('xref', 0) - features.get('startxref', 0))
-        
-    except subprocess.CalledProcessError as e:
-        features['error'] = True
-        features['corrupted'] = True
-    except Exception as e:
-        features['error'] = True
-        features['corrupted'] = True
-    
-    return features
-
-def create_model_feature_vector(features_dict):
-    """모델 학습에 사용된 특징들만 추출하여 벡터 생성"""
-    # 모델 학습에 사용되지 않은 특징들 제외
-    excluded_features = ['obj', 'endobj', 'stream', 'endstream', 'xref', 'startxref', 'trailer']
-    
-    # 모델 학습에 사용된 특징들
-    model_features = [
-        'size', '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript', 
-        '/AA', '/OpenAction', '/AcroForm', '/JBIG2Decode', '/RichMedia', 
-        '/Launch', '/EmbeddedFile', '/XFA', '/URI', '/Colors > 2^24',
-        'has_MZ', 'has_PK',
-        'obj_diff', 'stream_diff', 'xref_diff'
-    ]
-    
-    feature_vector = []
-    for feature in model_features:
-        feature_vector.append(features_dict.get(feature, 0))
-    
-    return np.array(feature_vector).reshape(1, -1)
-
-def load_model():
-    """저장된 모델 로드"""
-    try:
-        model_path = 'model/model_randomforest.pkl'
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
-        return model
-    except Exception as e:
-        print(f"모델 로드 오류: {e}")
-        return None
+ 
 
 @app.route('/')
 def index():
@@ -250,8 +94,7 @@ def upload_file():
             
             # 모델 예측 수행
             feature_vector = create_model_feature_vector(features_dict)
-            prediction_result = model.predict(feature_vector)[0]
-            prediction_proba = model.predict_proba(feature_vector)[0]
+            prediction_result, prediction_proba = predict_with_model(model, feature_vector)
             
             if prediction_result == 1:
                 result = "악성 PDF (AI 모델 판정)"
