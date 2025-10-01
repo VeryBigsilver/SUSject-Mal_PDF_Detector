@@ -145,10 +145,10 @@ def upload_file():
                         response_payload['combined_prediction'] = int(combo['prediction'])
                         if combo['prediction'] == 1:
                             response_payload['prediction'] = "악성 PDF (결합 판정)"
-                            response_payload['confidence'] = f"RF {rf_prob_mal*100:.1f}% | GNN err {gnn_error:.3f}"
+                            response_payload['confidence'] = f"RF {rf_prob_mal*100:.1f}% | GNN err {gnn_error:.4f}"
                         else:
                             response_payload['prediction'] = "정상 PDF (결합 판정)"
-                            response_payload['confidence'] = f"RF {(1.0-rf_prob_mal)*100:.1f}% | GNN err {gnn_error:.3f}"
+                            response_payload['confidence'] = f"RF {(1.0-rf_prob_mal)*100:.1f}% | GNN err {gnn_error:.4f}"
 
             # 임시 파일 삭제 (모든 분석 종료 후)
             os.remove(filepath)

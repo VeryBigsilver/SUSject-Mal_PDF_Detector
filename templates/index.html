@@ -561,6 +561,65 @@
             50% { opacity: 1; }
         }
 
+        /* 모드 토글 버튼 스타일 */
+        .mode-toggle-btn {
+            margin-left: 10px;
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            vertical-align: middle;
+        }
+
+        .mode-toggle-btn:hover {
+            background-color: #5a6268;
+            transform: scale(1.1);
+        }
+
+        .mode-toggle-btn.active {
+            background-color: #007bff;
+            animation: pulseActive 2s infinite;
+        }
+
+        .mode-toggle-btn.active:hover {
+            background-color: #0056b3;
+        }
+
+        @keyframes pulseActive {
+            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+        }
+
+        .plus-icon {
+            font-size: 22px;
+            font-weight: bold;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: block;
+            transform: rotate(0deg);
+        }
+
+        .mode-toggle-btn:hover .plus-icon {
+            transform: rotate(180deg);
+        }
+
+        .mode-toggle-btn.active .plus-icon {
+            transform: rotate(0deg);
+        }
+
+        .mode-toggle-btn.active:hover .plus-icon {
+            transform: rotate(180deg);
+        }
+
         /* 모바일 반응형 */
         @media (max-width: 768px) {
             .feature-items {
@@ -588,15 +647,24 @@
             .project-description {
                 font-size: 14px;
             }
+
+            .mode-toggle-btn {
+                width: 38px;
+                height: 38px;
+                margin-left: 8px;
+            }
+
+            .plus-icon {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>
-            🔍 악성 PDF 분석기
-            <button id="modeToggle" class="upload-btn" style="margin-left:10px; padding:6px 10px; font-size:14px; background:#6c757d;">
-                RF
+            🔍 악성 PDF 분석기<button id="modeToggle" class="mode-toggle-btn">
+                <span class="plus-icon">+</span>
             </button>
         </h1>
         
@@ -803,14 +871,34 @@
             });
         }
 
-        // 분석 모드 토글 (RF <-> RF+GNN)
-        window.__analysisMode = 'rf';
+        // 분석 모드 토글 (RF <-> RF+GNN) - localStorage로 상태 유지
         const modeToggle = document.getElementById('modeToggle');
+        
+        // 페이지 로드 시 저장된 모드 상태 복원
+        function initializeMode() {
+            const savedMode = localStorage.getItem('analysisMode') || 'rf';
+            window.__analysisMode = savedMode;
+            updateModeDisplay();
+        }
+        
+        // 모드 표시 업데이트
+        function updateModeDisplay() {
+            if (window.__analysisMode === 'both') {
+                modeToggle.classList.add('active');
+            } else {
+                modeToggle.classList.remove('active');
+            }
+        }
+        
+        // 모드 토글 이벤트
         modeToggle.addEventListener('click', () => {
             window.__analysisMode = window.__analysisMode === 'rf' ? 'both' : 'rf';
-            modeToggle.textContent = window.__analysisMode === 'rf' ? 'RF' : 'RF+GNN';
-            modeToggle.style.background = window.__analysisMode === 'rf' ? '#6c757d' : '#17a2b8';
+            localStorage.setItem('analysisMode', window.__analysisMode);
+            updateModeDisplay();
         });
+        
+        // 페이지 로드 시 초기화
+        initializeMode();
 
         function showProgressModal() {
             progressModal.style.display = 'block';

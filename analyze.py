@@ -220,12 +220,12 @@ def combine_rf_gnn(
     rf_prob_malicious: float,
     gnn_reconstruction_error: float,
     threshold_rf: float = 0.6,
-    threshold_gnn: float = 0.15,
+    threshold_gnn: float = 0.000365,
 ) -> Dict[str, Any]:
-    """RF 확률과 GNN 재구성 오차를 기반으로 간단 결합 판단을 수행합니다.
+    """RF 확률과 GNN 재구성 오차를 기반으로 결합 판단을 수행합니다.
 
     규칙:
-      - rf_prob >= threshold_rf AND gnn_error >= threshold_gnn → 악성(1)
+      - rf_prob <= threshold_rf OR gnn_error <= threshold_gnn → 악성(1)
       - 그 외 → 정상(0)
     반환:
       {
@@ -236,7 +236,7 @@ def combine_rf_gnn(
         'threshold_gnn': float,
       }
     """
-    is_mal = int((rf_prob_malicious >= threshold_rf) and (gnn_reconstruction_error >= threshold_gnn))
+    is_mal = int((rf_prob_malicious <= threshold_rf) or (gnn_reconstruction_error <= threshold_gnn))
     return {
         'prediction': is_mal,
         'rf_prob': float(rf_prob_malicious),
