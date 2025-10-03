@@ -564,61 +564,92 @@
         /* 모드 토글 버튼 스타일 */
         .mode-toggle-btn {
             margin-left: 10px;
-            width: 45px;
-            height: 45px;
             border: none;
-            border-radius: 50%;
-            background-color: #6c757d;
-            color: white;
+            background: transparent;
+            color: #6c757d; /* 비활성 회색 */
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: color 0.3s ease, transform 0.3s ease;
             position: relative;
-            overflow: hidden;
             vertical-align: middle;
+            padding: 0;
         }
 
         .mode-toggle-btn:hover {
-            background-color: #5a6268;
+            color: #5a6268; /* 회색 호버 */
             transform: scale(1.1);
         }
 
         .mode-toggle-btn.active {
-            background-color: #007bff;
-            animation: pulseActive 2s infinite;
+            color: #007bff; /* 활성 파란색 */
         }
 
         .mode-toggle-btn.active:hover {
-            background-color: #0056b3;
+            color: #0056b3; /* 파란색 호버 */
         }
 
         @keyframes pulseActive {
-            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+            0% { box-shadow: none; }
+            70% { box-shadow: none; }
+            100% { box-shadow: none; }
+        }
+
+        /* SVG 플러스 아이콘 크기/애니메이션 */
+        .plus-svg {
+            width: 36px;
+            height: 36px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mode-toggle-btn:hover .plus-svg {
+            transform: rotate(180deg);
+        }
+
+        .mode-toggle-btn.active .plus-svg {
+            transform: rotate(0deg);
+        }
+
+        .mode-toggle-btn.active:hover .plus-svg {
+            transform: rotate(180deg);
+        }
+
+        /* 활성 시 파도(리플) 효과 */
+        .ripple-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 34px;
+            height: 34px;
+            margin: 0;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .mode-toggle-btn.active .ripple-ring {
+            animation: ripple 2.2s ease-out infinite;
+        }
+
+        @keyframes ripple {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.18; }
+            35% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.06; }
+            60% { transform: translate(-50%, -50%) scale(1.28); opacity: 0.00; }
+            100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
         }
 
         .plus-icon {
-            font-size: 22px;
-            font-weight: bold;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.25em;
+            font-weight: 900;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), text-shadow 0.4s ease;
             display: block;
             transform: rotate(0deg);
+            line-height: 1;
         }
 
-        .mode-toggle-btn:hover .plus-icon {
-            transform: rotate(180deg);
-        }
-
-        .mode-toggle-btn.active .plus-icon {
-            transform: rotate(0deg);
-        }
-
-        .mode-toggle-btn.active:hover .plus-icon {
-            transform: rotate(180deg);
-        }
+        /* 이전 텍스트 아이콘 호버는 SVG로 대체됨 */
 
         /* 모바일 반응형 */
         @media (max-width: 768px) {
@@ -649,14 +680,36 @@
             }
 
             .mode-toggle-btn {
-                width: 38px;
-                height: 38px;
                 margin-left: 8px;
             }
 
-            .plus-icon {
-                font-size: 20px;
+            .plus-svg {
+                width: 32px;
+                height: 32px;
             }
+        }
+
+        /* Animated icons for BOTH mode */
+        .icon-chain-bob { animation: chainBob 2.2s ease-in-out infinite; transform-origin: 12px 12px; }
+        @keyframes chainBob { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-2px); } }
+        .icon-chain-left { animation: chainJoinLeft 2.8s ease-in-out infinite; transform-origin: 12px 12px; }
+        .icon-chain-right { animation: chainJoinRight 2.8s ease-in-out infinite; transform-origin: 12px 12px; }
+        @keyframes chainJoinLeft { 0%,100% { transform: translateX(-4px); } 50% { transform: translateX(-1px); } }
+        @keyframes chainJoinRight { 0%,100% { transform: translateX(4px); } 50% { transform: translateX(1px); } }
+
+        .icon-bintree { animation: treeBob 3s ease-in-out infinite; transform-origin: 12px 14px; }
+        @keyframes treeBob { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-2px); } }
+
+        .icon-bulb-glow { animation: bulbGlow 2.2s ease-in-out infinite; transform-origin: 12px 12px; }
+        @keyframes bulbGlow {
+            0% { opacity: 0.0; transform: scale(0.95); }
+            50% { opacity: 0.35; transform: scale(1.05); }
+            100% { opacity: 0.0; transform: scale(0.95); }
+        }
+        .icon-bulb-rays { animation: bulbRays 2.2s ease-in-out infinite; transform-origin: 12px 10px; }
+        @keyframes bulbRays {
+            0%,100% { opacity: 0.0; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(1.05); }
         }
     </style>
 </head>
@@ -664,7 +717,11 @@
     <div class="container">
         <h1>
             🔍 악성 PDF 분석기<button id="modeToggle" class="mode-toggle-btn">
-                <span class="plus-icon">+</span>
+                <svg class="plus-svg" viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <span class="ripple-ring"></span>
             </button>
         </h1>
         
@@ -685,7 +742,7 @@
             
             <div class="feature-items">
                 <div class="feature-card" onclick="toggleDetails(this)">
-                    <div class="feature-icon">
+                    <div class="feature-icon" id="fc1Icon">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <!-- 배경 원 -->
                             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3" class="pulse-circle"/>
@@ -695,11 +752,11 @@
                             <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
                         </svg>
                     </div>
-                    <h3>AI 머신러닝</h3>
-                    <p>Random Forest 알고리즘을 사용한 지능형 악성코드 탐지로 높은 정확도를 제공합니다.</p>
+                    <h3 id="fc1Title">AI 머신러닝</h3>
+                    <p id="fc1Desc">Random Forest 알고리즘을 사용한 지능형 악성코드 탐지로 높은 정확도를 제공합니다.</p>
                     <div class="feature-details">
-                        <h4>🤖 AI 머신러닝 기술 상세</h4>
-                        <ul>
+                        <h4 id="fc1DtlTitle">🤖 AI 머신러닝 기술 상세</h4>
+                        <ul id="fc1DtlList">
                             <li><span class="highlight">Random Forest 알고리즘</span>: 앙상블 학습 방법으로 높은 정확도와 안정성 제공</li>
                             <li><span class="highlight">특징 기반 학습</span>: PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 특징 분석</li>
                             <li><span class="highlight">정확도 95%+</span>: 대규모 데이터셋으로 훈련된 고성능 모델</li>
@@ -709,7 +766,7 @@
                 </div>
                 
                 <div class="feature-card" onclick="toggleDetails(this)">
-                    <div class="feature-icon">
+                    <div class="feature-icon" id="fc2Icon">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                             <!-- 검색 원 -->
                             <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2" class="search-circle"/>
@@ -726,11 +783,11 @@
                             <circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
                         </svg>
                     </div>
-                    <h3>특징 분석</h3>
-                    <p>PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 위험 요소를 종합적으로 분석합니다.</p>
+                    <h3 id="fc2Title">특징 분석</h3>
+                    <p id="fc2Desc">PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 위험 요소를 종합적으로 분석합니다.</p>
                     <div class="feature-details">
-                        <h4>🔍 특징 분석 상세</h4>
-                        <ul>
+                        <h4 id="fc2DtlTitle">🔍 특징 분석 상세</h4>
+                        <ul id="fc2DtlList">
                             <li><span class="highlight">JavaScript 분석</span>: 악성 스크립트, 자동 실행 코드 탐지</li>
                             <li><span class="highlight">임베디드 파일</span>: 숨겨진 실행 파일, 악성 코드 포함 여부 확인</li>
                             <li><span class="highlight">PDF 구조 분석</span>: 객체, 스트림, 크로스레퍼런스 등 구조적 특징</li>
@@ -739,7 +796,7 @@
                 </div>
                 
                 <div class="feature-card" onclick="toggleDetails(this)">
-                    <div class="feature-icon">
+                    <div class="feature-icon" id="fc3Icon">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="clock-container">
                             <!-- 배경 원 -->
                             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
@@ -755,11 +812,11 @@
                             <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
                         </svg>
                     </div>
-                    <h3>실시간 검사</h3>
-                    <p>업로드 즉시 분석이 시작되어 몇 초 내에 상세한 보안 분석 결과를 제공합니다.</p>
+                    <h3 id="fc3Title">실시간 검사</h3>
+                    <p id="fc3Desc">업로드 즉시 분석이 시작되어 몇 초 내에 상세한 보안 분석 결과를 제공합니다.</p>
                     <div class="feature-details">
-                        <h4>⚡ 실시간 검사 상세</h4>
-                        <ul>
+                        <h4 id="fc3DtlTitle">⚡ 실시간 검사 상세</h4>
+                        <ul id="fc3DtlList">
                             <li><span class="highlight">즉시 분석</span>: 파일 업로드와 동시에 분석 시작</li>
                             <li><span class="highlight">빠른 분석</span>: 대부분의 PDF 파일을 1분 이내에 분석 완료</li>
                             <li><span class="highlight">진행률 표시</span>: 실시간으로 분석 진행 상황을 확인 가능</li>
@@ -883,12 +940,187 @@
         
         // 모드 표시 업데이트
         function updateModeDisplay() {
-            if (window.__analysisMode === 'both') {
-                modeToggle.classList.add('active');
-            } else {
-                modeToggle.classList.remove('active');
-            }
-        }
+             if (window.__analysisMode === 'both') {
+                 modeToggle.classList.add('active');
+                 // BOTH 모드: 카드 텍스트를 RF+GNN 버전으로 교체
+                 const fc1Title = document.getElementById('fc1Title');
+                 const fc1Desc = document.getElementById('fc1Desc');
+                 const fc2Title = document.getElementById('fc2Title');
+                 const fc2Desc = document.getElementById('fc2Desc');
+                 const fc3Title = document.getElementById('fc3Title');
+                 const fc3Desc = document.getElementById('fc3Desc');
+                 const fc1Icon = document.getElementById('fc1Icon');
+                 const fc2Icon = document.getElementById('fc2Icon');
+                 const fc3Icon = document.getElementById('fc3Icon');
+                 const fc1DtlTitle = document.getElementById('fc1DtlTitle');
+                 const fc1DtlList = document.getElementById('fc1DtlList');
+                 const fc2DtlTitle = document.getElementById('fc2DtlTitle');
+                 const fc2DtlList = document.getElementById('fc2DtlList');
+                 const fc3DtlTitle = document.getElementById('fc3DtlTitle');
+                 const fc3DtlList = document.getElementById('fc3DtlList');
+ 
+                 if (fc1Title) fc1Title.textContent = 'AI 결합 분석 (RF + GNN)';
+                 if (fc1Desc) fc1Desc.textContent = '랜덤포레스트 확률과 GNN 재구성 오차를 결합하여 위협 신호를 보강합니다.';
+                 if (fc2Title) fc2Title.textContent = '그래프 기반 특징 이해';
+                 if (fc2Desc) fc2Desc.textContent = 'PDF를 그래프로 변환하여 노드/엣지 레벨에서 이상을 정밀 탐지합니다.';
+                 if (fc3Title) fc3Title.textContent = '정밀 모드';
+                 if (fc3Desc) fc3Desc.textContent = '기본 모드에서 놓친 위험을 추가 특징으로 포착합니다.';
+
+                 // 상세 설명 교체
+                 if (fc1DtlTitle) fc1DtlTitle.textContent = '🤝 결합 분석 상세';
+                 if (fc1DtlList) fc1DtlList.innerHTML = `
+                     <li><span class="highlight">확률+오차 결합</span>: RF 확률과 GNN 재구성 오차를 가중 결합</li>
+                     <li><span class="highlight">상호보완</span>: 구조 기반/패턴 기반 판단을 함께 활용</li>
+                     <li><span class="highlight">강건성 향상</span>: 단일 모델 대비 노이즈/변종에 강함</li>
+                 `;
+                 if (fc2DtlTitle) fc2DtlTitle.textContent = '🌳 그래프 기반 상세';
+                 if (fc2DtlList) fc2DtlList.innerHTML = `
+                     <li><span class="highlight">노드 특징</span>: 객체 타입/속성 임베딩</li>
+                     <li><span class="highlight">엣지 관계</span>: 객체 간 참조/의존 관계 반영</li>
+                     <li><span class="highlight">이상 탐지</span>: 재구성 오차/엣지 점수로 이상 신호 산출</li>
+                 `;
+                 if (fc3DtlTitle) fc3DtlTitle.textContent = '💡 정밀 모드 상세';
+                 if (fc3DtlList) fc3DtlList.innerHTML = `
+                     <li><span class="highlight">세밀 판별</span>: 의심 샘플에 대해 추가 점검</li>
+                     <li><span class="highlight">설명 가능</span>: 노드/엣지 단위로 근거 제공</li>
+                     <li><span class="highlight">유연 임계치</span>: 업무 목적에 맞게 경계 조정</li>
+                 `;
+ 
+                 // 임시 아이콘(둘 다 바꿔도 자리만들기용) — 나중에 교체해도 됨
+                 if (fc1Icon) fc1Icon.innerHTML = `
+                     <svg class="icon-chain-bob" width="56" height="56" viewBox="0 0 24 24" fill="none">
+                         <!-- 두 개의 타원이 일직선으로 놓이고, 그 사이를 평행한 짧은 선분이 연결 -->
+                         <g transform="rotate(-35 12 12)">
+                             <!-- 타원 링 -->
+                             <ellipse cx="9" cy="12" rx="3.3" ry="2.1" stroke="currentColor" stroke-width="2.2" fill="none"/>
+                             <ellipse cx="15" cy="12" rx="3.3" ry="2.1" stroke="currentColor" stroke-width="2.2" fill="none"/>
+                             <!-- 연결 막대 (타원 중심선과 평행) -->
+                             <rect x="11.2" y="11.2" width="1.6" height="1.6" rx="0.8" ry="0.8" fill="currentColor" stroke="none"/>
+                         </g>
+                     </svg>
+                 `;
+                 if (fc2Icon) fc2Icon.innerHTML = `
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                         <!-- 중앙 정렬된 3-노드 이진트리 (노드는 흰색 채움) -->
+                         <g class="icon-bintree" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                             <!-- 간선: 루트(12,10) -> 자식(7,16),(17,16) -->
+                             <path d="M12 10 L7 16" fill="none"/>
+                             <path d="M12 10 L17 16" fill="none"/>
+                             <!-- 노드: 흰색 채움 + 테두리 -->
+                             <circle cx="12" cy="10" r="2.1" fill="#ffffff"/>
+                             <circle cx="7" cy="16" r="2.1" fill="#ffffff"/>
+                             <circle cx="17" cy="16" r="2.1" fill="#ffffff"/>
+                         </g>
+                     </svg>
+                 `;
+                 if (fc3Icon) fc3Icon.innerHTML = `
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                         <!-- 자세한 전구와 빛 발산 -->
+                         <defs>
+                             <radialGradient id="bulbGlowGrad" cx="50%" cy="50%" r="55%">
+                                 <stop offset="0%" stop-color="currentColor" stop-opacity="0.28"/>
+                                 <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                             </radialGradient>
+                         </defs>
+                         <!-- 빛 퍼짐 -->
+                         <circle class="icon-bulb-glow" cx="12" cy="9.5" r="7.8" fill="url(#bulbGlowGrad)"/>
+                         <!-- 전구 외곽 -->
+                         <path d="M8 10a4 4 0 1 1 8 0c0 1.7-.85 3.0-2 3.8V15.2a2 2 0 0 1-4 0V13.8C8.85 13.0 8 11.7 8 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
+                         <!-- 소켓 -->
+                         <rect x="9.4" y="15.4" width="5.2" height="2.4" rx="1.1" fill="currentColor" opacity="0.9"/>
+                         <path d="M9 19h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                         <!-- 광선 -->
+                         <g class="icon-bulb-rays" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+                             <path d="M12 2.8v2.2"/>
+                             <path d="M6.6 4.4l1.4 1.4"/>
+                             <path d="M3.8 9.8H6"/>
+                             <path d="M17.6 5.8l-1.4 1.4"/>
+                             <path d="M18.8 9.8H16.6"/>
+                         </g>
+                     </svg>
+                 `;
+             } else {
+                 modeToggle.classList.remove('active');
+                 // RF 단독 모드: 기본 텍스트로 복원
+                 const fc1Title = document.getElementById('fc1Title');
+                 const fc1Desc = document.getElementById('fc1Desc');
+                 const fc2Title = document.getElementById('fc2Title');
+                 const fc2Desc = document.getElementById('fc2Desc');
+                 const fc3Title = document.getElementById('fc3Title');
+                 const fc3Desc = document.getElementById('fc3Desc');
+                 const fc1Icon = document.getElementById('fc1Icon');
+                 const fc2Icon = document.getElementById('fc2Icon');
+                 const fc3Icon = document.getElementById('fc3Icon');
+                 const fc1DtlTitle = document.getElementById('fc1DtlTitle');
+                 const fc1DtlList = document.getElementById('fc1DtlList');
+                 const fc2DtlTitle = document.getElementById('fc2DtlTitle');
+                 const fc2DtlList = document.getElementById('fc2DtlList');
+                 const fc3DtlTitle = document.getElementById('fc3DtlTitle');
+                 const fc3DtlList = document.getElementById('fc3DtlList');
+ 
+                 if (fc1Title) fc1Title.textContent = 'AI 머신러닝';
+                 if (fc1Desc) fc1Desc.textContent = 'Random Forest 알고리즘을 사용한 지능형 악성코드 탐지로 높은 정확도를 제공합니다.';
+                 if (fc2Title) fc2Title.textContent = '특징 분석';
+                 if (fc2Desc) fc2Desc.textContent = 'PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 위험 요소를 종합적으로 분석합니다.';
+                 if (fc3Title) fc3Title.textContent = '실시간 검사';
+                 if (fc3Desc) fc3Desc.textContent = '업로드 즉시 분석이 시작되어 몇 초 내에 상세한 보안 분석 결과를 제공합니다.';
+
+                 // 상세 설명 복원
+                 if (fc1DtlTitle) fc1DtlTitle.textContent = '🤖 AI 머신러닝 기술 상세';
+                 if (fc1DtlList) fc1DtlList.innerHTML = `
+                     <li><span class="highlight">Random Forest 알고리즘</span>: 앙상블 학습 방법으로 높은 정확도와 안정성 제공</li>
+                     <li><span class="highlight">특징 기반 학습</span>: PDF 구조, JavaScript, 임베디드 파일 등 20여 가지 특징 분석</li>
+                     <li><span class="highlight">정확도 95%+</span>: 대규모 데이터셋으로 훈련된 고성능 모델</li>
+                     <li><span class="highlight">오탐 최소화</span>: 정상 PDF와 악성 PDF를 정확히 구분</li>
+                 `;
+                 if (fc2DtlTitle) fc2DtlTitle.textContent = '🔍 특징 분석 상세';
+                 if (fc2DtlList) fc2DtlList.innerHTML = `
+                     <li><span class="highlight">JavaScript 분석</span>: 악성 스크립트, 자동 실행 코드 탐지</li>
+                     <li><span class="highlight">임베디드 파일</span>: 숨겨진 실행 파일, 악성 코드 포함 여부 확인</li>
+                     <li><span class="highlight">PDF 구조 분석</span>: 객체, 스트림, 크로스레퍼런스 등 구조적 특징</li>
+                 `;
+                 if (fc3DtlTitle) fc3DtlTitle.textContent = '⚡ 실시간 검사 상세';
+                 if (fc3DtlList) fc3DtlList.innerHTML = `
+                     <li><span class="highlight">즉시 분석</span>: 파일 업로드와 동시에 분석 시작</li>
+                     <li><span class="highlight">빠른 분석</span>: 대부분의 PDF 파일을 1분 이내에 분석 완료</li>
+                     <li><span class="highlight">진행률 표시</span>: 실시간으로 분석 진행 상황을 확인 가능</li>
+                     <li><span class="highlight">상세 결과</span>: 악성 여부, 신뢰도, 위험 요소 상세 분석</li>
+                     <li><span class="highlight">웹 기반</span>: 별도 프로그램 설치 없이 브라우저에서 바로 사용</li>
+                     <li><span class="highlight">보안 강화</span>: 업로드된 파일은 분석 후 자동 삭제</li>
+                 `;
+ 
+                 // 기본 아이콘 복원 (원래 있던 SVG 그대로)
+                 if (fc1Icon) fc1Icon.innerHTML = `
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3" class="pulse-circle"/>
+                         <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="checkmark-path"/>
+                         <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+                     </svg>
+                 `;
+                 if (fc2Icon) fc2Icon.innerHTML = `
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                         <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2" class="search-circle"/>
+                         <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="search-line"/>
+                         <circle cx="11" cy="11" r="2" fill="currentColor" class="search-dot"/>
+                         <g class="search-star" transform="translate(18, 6)">
+                             <path d="M0,-2 L0,2 M-2,0 L2,0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                             <circle cx="0" cy="0" r="1" fill="currentColor"/>
+                         </g>
+                         <circle cx="11" cy="11" r="5" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                     </svg>
+                 `;
+                 if (fc3Icon) fc3Icon.innerHTML = `
+                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="clock-container">
+                         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" class="clock-circle"/>
+                         <path d="M12 12L12 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="hour-hand"/>
+                         <path d="M12 12L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="minute-hand"/>
+                         <circle cx="12" cy="12" r="1.5" fill="currentColor" class="clock-center"/>
+                         <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+                     </svg>
+                 `;
+             }
+         }
         
         // 모드 토글 이벤트
         modeToggle.addEventListener('click', () => {

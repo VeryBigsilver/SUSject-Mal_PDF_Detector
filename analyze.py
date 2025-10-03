@@ -51,32 +51,49 @@ def predict_with_model_rf(model, feature_vector: np.ndarray) -> Tuple[int, np.nd
 # ==========================
 
 class OneClassPDFGNN(nn.Module):
-    """학습 시 사용한 간단한 One-Class GNN 아키텍처 정의.
+    """One-Class GNN (노드/엣지 복원 포함) 아키텍처.
 
-    주의: 저장된 파일이 state_dict만 포함하는 경우 in_channels가 필요합니다.
+    - Encoder: GCNConv → GCNConv (hidden 차원 유지)
+    - Node Decoder: Linear(hidden→hidden) → Linear(hidden→in_channels)
+    - Edge Decoder: 노드 임베딩 내적 (BCEWithLogitsLoss에 사용 가능)
+
+    주의: 저장이 state_dict인 경우 in_channels/hidden이 필요하며, 본 모듈은
+    저장된 가중치의 shape로부터 자동 추론을 시도합니다.
     """
 
-    def __init__(self, in_channels: int, hidden: int = 32) -> None:
+    def __init__(self, in_channels: int, hidden: int = 64) -> None:
         super().__init__()
+        # Encoder
         self.conv1 = GCNConv(in_channels, hidden)
         self.conv2 = GCNConv(hidden, hidden)
-        self.decoder_lin1 = nn.Linear(hidden, hidden)
-        self.decoder_lin2 = nn.Linear(hidden, in_channels)
+        # Node-level decoder
+        self.decoder_node_lin1 = nn.Linear(hidden, hidden)
+        self.decoder_node_lin2 = nn.Linear(hidden, in_channels)
 
     def forward(self, data):  # type: ignore[override]
         x, edge_index, batch = data.x, data.edge_index, data.batch
+
+        # Encoder
         x = F.relu(self.conv1(x, edge_index))
-        x = F.relu(self.conv2(x, edge_index))
-        graph_representation = global_mean_pool(x, batch)
-        reconstructed_features = F.relu(self.decoder_lin1(x))
-        reconstructed_features = self.decoder_lin2(reconstructed_features)
-        return graph_representation, reconstructed_features
+        node_representation = F.relu(self.conv2(x, edge_index))
+
+        # Node reconstruction
+        reconstructed_x = F.relu(self.decoder_node_lin1(node_representation))
+        reconstructed_x = self.decoder_node_lin2(reconstructed_x)
+
+        # Edge scores via inner product for existing edges
+        row, col = edge_index
+        edge_scores = torch.sum(
+            node_representation[row] * node_representation[col], dim=1
+        )
+
+        return reconstructed_x, edge_scores, node_representation
 
 
 def load_model_gnn(
     model_path: str = 'model/model_gnn.pt',
     in_channels: Optional[int] = None,
-    hidden: int = 32,
+    hidden: Optional[int] = None,
 ):
     """저장된 GNN 모델을 로드해 반환합니다.
 
@@ -117,12 +134,31 @@ def load_model_gnn(
     if state_dict is None:
         return None
 
+    # state_dict에서 in_channels/hidden 자동 추론 시도
+    # decoder_node_lin2.weight: (out=in_channels, in=hidden)
+    try:
+        if 'decoder_node_lin2.weight' in state_dict:
+            w = state_dict['decoder_node_lin2.weight']
+            if hasattr(w, 'shape') and len(w.shape) == 2:
+                inferred_in_channels = int(w.shape[0])
+                inferred_hidden = int(w.shape[1])
+                if in_channels is None:
+                    in_channels = inferred_in_channels
+                if hidden is None:
+                    hidden = inferred_hidden
+    except Exception:
+        pass
+
+    # 기본 hidden 설정(미추론 시 64)
+    if hidden is None:
+        hidden = 64
+
     if in_channels is None or not isinstance(in_channels, int) or in_channels <= 0:
         # in_channels를 알 수 없으면 동일 아키텍처를 구성할 수 없음
         return None
 
     try:
-        model = OneClassPDFGNN(in_channels=in_channels, hidden=hidden)
+        model = OneClassPDFGNN(in_channels=in_channels, hidden=int(hidden))
         missing, unexpected = model.load_state_dict(state_dict, strict=False)
         # strict=False로 유연하게 로딩; 호출부에서 검증하도록 None 미반환
         model.eval()
@@ -146,7 +182,7 @@ def run_gnn_on_graph(
     graph_data,
     device: Optional[str] = None,
 ) -> float:
-    """단일 그래프에 대해 재구성 오차(MSE)를 계산해 반환합니다.
+    """단일 그래프에 대해 노드 재구성 오차(MSE)를 계산해 반환합니다.
 
     반환값: reconstruction_error (float)
     """
@@ -163,9 +199,18 @@ def run_gnn_on_graph(
     with torch.no_grad():
         for batch in loader:
             batch = batch.to(device)
-            _, reconstructed_features = model(batch)
-            # 입력 노드 특징과 재구성 특징 간의 MSE
-            mse = torch.nn.functional.mse_loss(reconstructed_features, batch.x).item()
+            # 새 모델 출력: reconstructed_x, edge_scores, node_representation
+            reconstructed_x, edge_scores, _ = model(batch)
+            # 입력 노드 특징과 재구성 특징 간의 MSE (주요 지표)
+            mse = torch.nn.functional.mse_loss(reconstructed_x, batch.x).item()
+
+            # 참고: 엣지 BCE 로스(기존 엣지는 1로 가정). 필요 시 확장 가능
+            # if edge_scores.numel() > 0:
+            #     edge_target = torch.ones_like(edge_scores)
+            #     edge_bce = torch.nn.functional.binary_cross_entropy_with_logits(edge_scores, edge_target).item()
+            # else:
+            #     edge_bce = 0.0
+
             return mse
 
     return float('nan')
