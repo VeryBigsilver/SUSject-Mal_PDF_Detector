@@ -1,20 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import os
 from werkzeug.utils import secure_filename
-from preprocess import (
-    extract_feature_from_pdf_rf,
-    extract_pdf_features_rf,
-    search_mz_pk_in_pdf_rf,
-)
-from analyze import (
-    load_model_rf,
-    create_model_feature_vector_rf,
-    predict_with_model_rf,
-    load_model_gnn,
-    run_gnn_on_pdf,
-    combine_rf_gnn,
-    load_all_possible_types,
-)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -58,6 +44,19 @@ def upload_file():
         try:
             # 모드: rf (기본), both (rf + gnn)
             mode = request.form.get('mode', 'rf')
+
+            # 필요한 모듈/함수들을 지연 로딩 (lazy import)
+            from preprocess import (
+                extract_feature_from_pdf_rf,
+                extract_pdf_features_rf,
+                search_mz_pk_in_pdf_rf,
+            )
+            from analyze import (
+                load_model_rf,
+                create_model_feature_vector_rf,
+                predict_with_model_rf,
+                load_all_possible_types,
+            )
 
             # 1. PDF 특징 추출 (RF)
             features_dict = extract_feature_from_pdf_rf(filepath)
@@ -128,6 +127,8 @@ def upload_file():
                     response_payload['gnn_notice'] = 'GNN 타입 리스트를 찾을 수 없어 RF만 수행했습니다.'
                     response_payload['analysis_method'] = "AI 모델 (RF)"
                 else:
+                    # GNN 관련 유틸은 실제 사용할 때만 로드
+                    from analyze import load_model_gnn, run_gnn_on_pdf, combine_rf_gnn
                     # in_channels = len(types) + 6 규칙으로 모델 구성 후 로드 시도
                     in_channels = len(all_types) + 6
                     gnn_model = load_model_gnn('model/model_gnn.pt', in_channels=in_channels)

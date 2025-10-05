@@ -5,9 +5,6 @@ from typing import Dict, Tuple, List, Any
 from collections import Counter
 import math
 
-import torch
-from torch_geometric.data import Data
-
 
 PDF_PARSER_PATH = 'pdf-parser.py'
 PDFID_PATH = 'pdfid/pdfid.py'
@@ -259,11 +256,15 @@ def objects_to_graph(
     all_possible_types: List[str],
     add_self_loop: bool = False,
     bidirectional: bool = True,
-) -> Data:
+):
     """
     파싱된 PDF 객체 목록을 PyTorch Geometric Data 객체로 변환합니다.
     all_possible_types: 전체 데이터셋에서 수집한 고유 타입들의 정렬된 리스트
     """
+    # 지연 로딩: torch와 Data는 실제로 그래프를 만들 때만 필요
+    import torch
+    from torch_geometric.data import Data
+
     if not objects:
         feature_dim = len(all_possible_types) + 6
         return Data(
@@ -334,7 +335,7 @@ def objects_to_graph(
     return Data(x=x, edge_index=edge_index)
 
 
-def build_graph_from_pdf(pdf_path: str, all_possible_types: List[str]) -> Data:
+def build_graph_from_pdf(pdf_path: str, all_possible_types: List[str]):
     """편의 함수: 경로에서 파싱 → 그래프 변환까지 수행."""
     objects = parse_pdf_with_pdfparser(pdf_path)
     return objects_to_graph(objects, all_possible_types)

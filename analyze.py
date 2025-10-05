@@ -1,14 +1,6 @@
 import pickle
 import json
-import numpy as np
 from typing import Dict, Tuple, Optional, List, Any
-
-# Torch / GNN imports (for GNN model loading)
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool
-from torch_geometric.loader import DataLoader
 
 # 전처리(graph 생성) 유틸
 from preprocess import build_graph_from_pdf
@@ -16,8 +8,10 @@ from preprocess import build_graph_from_pdf
 MODEL_PATH_RF = 'model/model_randomforest.pkl'
 
 
-def create_model_feature_vector_rf(features_dict: Dict[str, int]) -> np.ndarray:
+def create_model_feature_vector_rf(features_dict: Dict[str, int]):
     """모델 학습에 사용된 특징들만 추출하여 벡터 생성"""
+    # 지연 로딩: NumPy는 여기서만 필요
+    import numpy as np
     model_features = [
         'size', '/Page', '/Encrypt', '/ObjStm', '/JS', '/JavaScript',
         '/AA', '/OpenAction', '/AcroForm', '/JBIG2Decode', '/RichMedia',
@@ -39,7 +33,7 @@ def load_model_rf(model_path: str = MODEL_PATH_RF):
         return None
 
 
-def predict_with_model_rf(model, feature_vector: np.ndarray) -> Tuple[int, np.ndarray]:
+def predict_with_model_rf(model, feature_vector) -> Tuple[int, Any]:
     """모델로 예측 결과와 확률 벡터 반환"""
     prediction_result = model.predict(feature_vector)[0]
     prediction_proba = model.predict_proba(feature_vector)[0]
@@ -49,46 +43,6 @@ def predict_with_model_rf(model, feature_vector: np.ndarray) -> Tuple[int, np.nd
 # ==========================
 # GNN 모델 로딩/유틸
 # ==========================
-
-class OneClassPDFGNN(nn.Module):
-    """One-Class GNN (노드/엣지 복원 포함) 아키텍처.
-
-    - Encoder: GCNConv → GCNConv (hidden 차원 유지)
-    - Node Decoder: Linear(hidden→hidden) → Linear(hidden→in_channels)
-    - Edge Decoder: 노드 임베딩 내적 (BCEWithLogitsLoss에 사용 가능)
-
-    주의: 저장이 state_dict인 경우 in_channels/hidden이 필요하며, 본 모듈은
-    저장된 가중치의 shape로부터 자동 추론을 시도합니다.
-    """
-
-    def __init__(self, in_channels: int, hidden: int = 64) -> None:
-        super().__init__()
-        # Encoder
-        self.conv1 = GCNConv(in_channels, hidden)
-        self.conv2 = GCNConv(hidden, hidden)
-        # Node-level decoder
-        self.decoder_node_lin1 = nn.Linear(hidden, hidden)
-        self.decoder_node_lin2 = nn.Linear(hidden, in_channels)
-
-    def forward(self, data):  # type: ignore[override]
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-
-        # Encoder
-        x = F.relu(self.conv1(x, edge_index))
-        node_representation = F.relu(self.conv2(x, edge_index))
-
-        # Node reconstruction
-        reconstructed_x = F.relu(self.decoder_node_lin1(node_representation))
-        reconstructed_x = self.decoder_node_lin2(reconstructed_x)
-
-        # Edge scores via inner product for existing edges
-        row, col = edge_index
-        edge_scores = torch.sum(
-            node_representation[row] * node_representation[col], dim=1
-        )
-
-        return reconstructed_x, edge_scores, node_representation
-
 
 def load_model_gnn(
     model_path: str = 'model/model_gnn.pt',
@@ -105,6 +59,51 @@ def load_model_gnn(
     """
     if not model_path:
         return None
+
+    # 지연 로딩: Torch 및 관련 모듈은 여기서만 필요
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torch_geometric.nn import GCNConv
+
+    class OneClassPDFGNN(nn.Module):
+        """One-Class GNN (노드/엣지 복원 포함) 아키텍처.
+
+        - Encoder: GCNConv → GCNConv (hidden 차원 유지)
+        - Node Decoder: Linear(hidden→hidden) → Linear(hidden→in_channels)
+        - Edge Decoder: 노드 임베딩 내적 (BCEWithLogitsLoss에 사용 가능)
+
+        주의: 저장이 state_dict인 경우 in_channels/hidden이 필요하며, 본 모듈은
+        저장된 가중치의 shape로부터 자동 추론을 시도합니다.
+        """
+
+        def __init__(self, in_channels: int, hidden: int = 64) -> None:
+            super().__init__()
+            # Encoder
+            self.conv1 = GCNConv(in_channels, hidden)
+            self.conv2 = GCNConv(hidden, hidden)
+            # Node-level decoder
+            self.decoder_node_lin1 = nn.Linear(hidden, hidden)
+            self.decoder_node_lin2 = nn.Linear(hidden, in_channels)
+
+        def forward(self, data):  # type: ignore[override]
+            x, edge_index, batch = data.x, data.edge_index, data.batch
+
+            # Encoder
+            x = F.relu(self.conv1(x, edge_index))
+            node_representation = F.relu(self.conv2(x, edge_index))
+
+            # Node reconstruction
+            reconstructed_x = F.relu(self.decoder_node_lin1(node_representation))
+            reconstructed_x = self.decoder_node_lin2(reconstructed_x)
+
+            # Edge scores via inner product for existing edges
+            row, col = edge_index
+            edge_scores = torch.sum(
+                node_representation[row] * node_representation[col], dim=1
+            )
+
+            return reconstructed_x, edge_scores, node_representation
 
     try:
         checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
@@ -167,18 +166,18 @@ def load_model_gnn(
         return None
 
 
-def create_model_feature_vector_gnn(features_dict: Dict[str, int]) -> np.ndarray:
+def create_model_feature_vector_gnn(features_dict: Dict[str, int]):
     """GNN 입력 전처리 (프로젝트 요구에 맞게 향후 구현)."""
     raise NotImplementedError("GNN 전처리는 프로젝트 설계에 맞춰 별도 구현이 필요합니다.")
 
 
-def predict_with_gnn(model, gnn_input) -> Tuple[int, np.ndarray]:
+def predict_with_gnn(model, gnn_input) -> Tuple[int, Any]:
     """Deprecated: 사용하지 않음 (아래 run_gnn_on_graph 사용)."""
     raise NotImplementedError("predict_with_gnn는 사용하지 않습니다. run_gnn_on_graph를 사용하세요.")
 
 
 def run_gnn_on_graph(
-    model: nn.Module,
+    model,
     graph_data,
     device: Optional[str] = None,
 ) -> float:
@@ -188,6 +187,10 @@ def run_gnn_on_graph(
     """
     if model is None:
         raise ValueError("model이 None 입니다.")
+
+    # 지연 로딩
+    import torch
+    from torch_geometric.loader import DataLoader
 
     if device is None:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -219,7 +222,7 @@ def run_gnn_on_graph(
 def run_gnn_on_pdf(
     pdf_path: str,
     all_possible_types: List[str],
-    model: nn.Module,
+    model,
     threshold: Optional[float] = None,
     device: Optional[str] = None,
 ) -> Dict[str, Any]:
