@@ -57,19 +57,28 @@ http://localhost:5000
 
 ```
 PDFMalwareDetect/
-├── app.py                    # Flask 메인 애플리케이션
+├── app.py                      # Flask 메인 애플리케이션 (라우팅/업로드)
+├── analyze.py                  # RF/GNN 로딩 및 추론 유틸리티
+├── preprocess.py               # PDF → 그래프/특징 전처리
+├── pdf-parser.py               # MZ/PK 검색 스크립트
+├── run_production.py           # 프로덕션 실행 스크립트(옵션)
+├── gunicorn.conf.py            # Gunicorn 설정(옵션)
 ├── templates/
-│   ├── index.html           # 메인 페이지 (업로드 인터페이스)
-│   └── result.html          # 결과 페이지 (분석 결과 표시)
+│   ├── index.html             # 메인 페이지 (업로드/토글 UI)
+│   └── result.html            # 결과 페이지 (분석 결과 표시)
 ├── model/
-│   └── model_randomforest.pkl  # AI 모델 파일
-├── pdfid/                   # PDF 특징 추출 도구
+│   ├── model_randomforest_weighted.pkl  # Random Forest 모델
+│   ├── model_gnn.pt                      # GNN 모델(One-Class, 재구성 기반)
+│   └── all_possible_types.json           # 그래프 노드 타입 리스트
+├── pdfid/                     # PDF 특징 추출 도구
 │   ├── pdfid.py
 │   ├── pdfid.ini
 │   └── plugin_*.py
-├── uploads/                 # 임시 업로드 폴더
-├── requirements.txt         # Python 패키지 목록
-└── README.md              # 프로젝트 문서
+├── uploads/                   # 임시 업로드 폴더
+├── feature_processed.csv      # 전처리 산출물(옵션)
+├── requirements.txt           # Python 패키지 목록
+├── LICENSE                    # 라이선스
+└── README.md                  # 프로젝트 문서
 ```
 
 ## 🎯 사용법
@@ -137,6 +146,9 @@ link in: https://ieee-dataport.org/documents/pdfrep
 ### **AI/ML**
 - **Random Forest**: 악성 PDF 분류 모델
 - **특징 엔지니어링**: PDF 구조 기반 특징 추출
+- **GNN (One-Class)**: 노드/엣지 재구성 기반 이상 탐지 (PyTorch Geometric)
+  - 모델 파일: `model/model_gnn.pt`
+  - RF와 결합하여 both 모드에서 최종 판단
 
 | 정확도(accuracy) | 정밀도(precision) | 재현율(recall) | f1-score |
 | ------------- | -------------- | ----------- | -------- |

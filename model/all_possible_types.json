@@ -1,0 +1,13 @@
+[
+  "3D", "3DLightingScheme", "3DRenderMode", "3DView",
+  "A", "Action", "Annot", "Border", "Catalog", "ContentRegion",
+  "EmbeddedFile", "Encoding", "ExtGState", "FileSpec", "Filespec",
+  "Flow", "Font", "FontDescriptor", "Group", "Halftone",
+  "JobTicketContents", "Layout", "MCR", "Mask", "MediaClip",
+  "MediaPermissions", "Metadata", "OBJR", "OCG", "OCMD",
+  "OPI", "ObjStm", "Outlines", "OutputIntent", "Page",
+  "Pages", "Pattern", "RestoreTree", "Sig", "SigFieldLock",
+  "StructElem", "StructTreeRoot", "Template", "Timespan", "TransformParams",
+  "Unknown", "ViewerPreferences", "XObject", "XRef"
+]
+
