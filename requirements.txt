@@ -10,7 +10,7 @@ scikit-learn==1.7.1
 gunicorn==21.2.0 
 
 # PyTorch (CPU-only)
-torch==2.3.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.4.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 
 # PyG (CPU prebuilt wheels)
 torch-scatter==2.1.2+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
