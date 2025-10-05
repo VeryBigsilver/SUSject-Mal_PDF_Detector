@@ -1,4 +1,5 @@
 --prefer-binary
+
 Flask==3.1.0
 Werkzeug==3.1.0
 numpy==1.26.4
@@ -7,10 +8,14 @@ matplotlib==3.9.0
 seaborn==0.13.2
 scikit-learn==1.7.1
 gunicorn==21.2.0 
-torch==2.3.1
+
+# PyTorch (CPU-only)
+torch==2.3.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+
+# PyG (CPU prebuilt wheels)
+torch-scatter==2.1.2+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
+torch-sparse==0.6.18+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
+torch-cluster==1.6.3+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
+torch-spline-conv==1.2.2+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
+pyg-lib==0.4.0+pt23cpu --find-links https://data.pyg.org/whl/torch-2.3.1+cpu.html
 torch-geometric==2.6.1
-torch-scatter==2.1.2
-torch-sparse==0.6.18
-torch-cluster==1.6.3
-torch-spline-conv==1.2.2
-pyg-lib==0.4.0
