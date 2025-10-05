@@ -1,9 +1,11 @@
 pip>=25.2
 
+# PyTorch 및 PyG 라이브러리를 위한 별도 저장소 URL
 --extra-index-url https://download.pytorch.org/whl/cpu
+--find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
 --prefer-binary
-torch==2.4.1+cpu
 
+# 기본 라이브러리
 Flask==3.1.0
 Werkzeug==3.1.0
 gunicorn==21.2.0
@@ -13,9 +15,11 @@ matplotlib==3.9.0
 seaborn==0.13.2
 scikit-learn==1.7.1
 
-torch-scatter==2.1.2 --find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
-torch-sparse==0.6.18 --find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
-torch-cluster==1.6.3 --find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
-torch-spline-conv==1.2.2 --find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
-pyg-lib==0.4.0 --find-links https://data.pyg.org/whl/torch-2.4.1+cpu.html
+# PyTorch 및 PyG 라이브러리 (버전 꼬리표 복원)
+torch==2.4.1+cpu
+torch-scatter==2.1.2+pt24cpu
+torch-sparse==0.6.18+pt24cpu
+torch-cluster==1.6.3+pt24cpu
+torch-spline-conv==1.2.2+pt24cpu
+pyg-lib==0.4.0+pt24cpu
 torch-geometric==2.6.1
