@@ -7,6 +7,8 @@
 
 AI 기반 PDF 악성코드 탐지 웹 서비스입니다. PDF 파일의 특징을 분석하여 악성코드 포함 여부를 실시간으로 탐지합니다.
 
+**all research files locate at research_files branch**
+
 ## 🚀 주요 기능
 
 ### 📊 **분석 방법**
