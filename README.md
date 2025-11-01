@@ -7,12 +7,15 @@
 
 AI 기반 PDF 악성코드 탐지 웹 서비스입니다. PDF 파일의 특징을 분석하여 악성코드 포함 여부를 실시간으로 탐지합니다.
 
+random forest + GAE
+
 **all research files locate at research_files branch**
 
 ## 🚀 주요 기능
 
 ### 📊 **분석 방법**
-- **AI 모델 분석**: Random Forest 기반 머신러닝 모델
+- **기본 모드**: Random Forest 기반 머신러닝 모델
+- **plus 모드**: RF + GAE 기반 AI 분석석
 - **실시간 분석**: 업로드 즉시 분석 시작
 
 ### 🔍 **상세한 특징 분석**
@@ -20,13 +23,6 @@ AI 기반 PDF 악성코드 탐지 웹 서비스입니다. PDF 파일의 특징�
 - **보안 위험 요소**: 자바스크립트, 외부 실행, 임베디드 파일
 - **위험도 분류**: 높은 위험, 중간 위험, 안전으로 분류
 - **실제 값 표시**: 각 특징의 구체적인 내용 확인
-
-### 🎨 **직관적인 사용자 인터페이스**
-- **드래그 앤 드롭**: 간편한 파일 업로드
-- **진행률 표시**: 분석 과정 실시간 모니터링
-- **테마 기반 결과**: 위험도에 따른 색상 테마
-- **카드 형태 표시**: 특징별 상세 정보 카드
-- **반응형 디자인**: 모바일/데스크톱 최적화
 
 ### 🔒 **보안 및 개인정보 보호**
 - **임시 파일 처리**: 분석 후 자동 파일 삭제
@@ -148,8 +144,8 @@ link in: https://ieee-dataport.org/documents/pdfrep
 ### **AI/ML**
 - **Random Forest**: 악성 PDF 분류 모델
 - **특징 엔지니어링**: PDF 구조 기반 특징 추출
-- **GNN (One-Class)**: 노드/엣지 재구성 기반 이상 탐지 (PyTorch Geometric)
-  - 모델 파일: `model/model_gnn.pt`
+- **Graph Auto Encoder**: 노드/엣지 재구성 기반 이상 탐지 (PyTorch Geometric)
+  - 모델 파일: `model/model_randomforest.pkl`, `model/model_gnn.pt`
   - RF와 결합하여 both 모드에서 최종 판단
 
 | 정확도(accuracy) | 정밀도(precision) | 재현율(recall) | f1-score |
