@@ -1,6 +1,6 @@
 ![License](https://img.shields.io/github/license/VeryBigsilver/SUSject-Mal_PDF_Detector)
 
-<img src="https://www.konkuk.ac.kr/sites/konkuk/images/common/logo-top-color.png" width="250"/>    for 2025 건국대학교 학술공모전
+<img src="https://www.konkuk.ac.kr/sites/konkuk/images/common/logo-top-color.png" width="250"/>    for 2025 건국대학교 학술공모전 (우수)
 
 
 # PDF 악성코드 탐지 시스템
@@ -15,7 +15,7 @@ random forest + GAE
 
 ### 📊 **분석 방법**
 - **기본 모드**: Random Forest 기반 머신러닝 모델
-- **plus 모드**: RF + GAE 기반 AI 분석석
+- **plus 모드**: RF + GAE 기반 AI 분석
 - **실시간 분석**: 업로드 즉시 분석 시작
 
 ### 🔍 **상세한 특징 분석**
